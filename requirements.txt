@@ -1,8 +1,16 @@
 Flask==0.10.1
+Flask-Bootstrap==3.3.5.7
+Flask-Mail==0.9.1
+Flask-Moment==0.5.1
 Flask-Redis==0.1.0
+Flask-SQLAlchemy==2.1
 Jinja2==2.8
 MarkupSafe==0.23
 PyYAML==3.11
+SQLAlchemy==1.0.12
 Werkzeug==0.11.8
+blinker==1.4
+dominate==2.2.0
 itsdangerous==0.24
 redis==2.10.5
+visitor==0.1.2

@@ -21,6 +21,17 @@ def signal_handler(signal, frame):
     sys.exit(0)
 
 
+def watchdog(rdb):
+    """
+    :param rdb: Redis connection
+    :type rdb: redis.StrictRedis
+    :return:
+    """
+    while True:
+        rdb.setex(REDIS_PREFIX + ":feeder:alive", 5, True)
+        gevent.sleep(2)
+
+
 def run():
     # Register exit handler
     signal.signal(signal.SIGINT, signal_handler)
@@ -28,7 +39,7 @@ def run():
 
     # Load the cameras configuration
     data = yaml.load(open(CAMS_FILE, 'r'))
-    cams = data['cams'] # type: dict
+    cams = data['cams']  # type: dict
 
     # Connect to the redis instance
     rdb = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
@@ -40,9 +51,13 @@ def run():
         cam_feeders[cam_name] = cf
         cf.start()
 
+    # Create the watchdog
+    gevent.spawn(watchdog, rdb)
+
     # Wait for all the greenlets
     greenlets = [cam._g for cam in cam_feeders.values()]
     gevent.joinall(greenlets)
+
 
 if __name__ == '__main__':
     run()

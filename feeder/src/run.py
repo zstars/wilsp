@@ -1,19 +1,30 @@
-import time
-import yaml
-import redis
+
+
+import os
 import signal
 import sys
+
 import gevent
+import redis
+import yaml
 
 from CamFeeder import CamFeeder
 
-CAMS_FILE = '../cams.yml'
+
+# Pre-set the working directory.
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+
+CAMS_FILE = '../../cams.yml'
 REDIS_PREFIX = 'wilsa'
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
 REDIS_DB = 0
 
 cam_feeders = {}
+greenlets = []
 
 
 def signal_handler(signal, frame):
@@ -33,6 +44,8 @@ def watchdog(rdb):
 
 
 def run():
+    global greenlets
+
     # Register exit handler
     signal.signal(signal.SIGINT, signal_handler)
     print('Press Ctrl+C to exit.')
@@ -52,12 +65,15 @@ def run():
         cf.start()
 
     # Create the watchdog
-    gevent.spawn(watchdog, rdb)
+    g = gevent.spawn(watchdog, rdb)
+    greenlets.append(g)
 
     # Wait for all the greenlets
-    greenlets = [cam._g for cam in cam_feeders.values()]
-    gevent.joinall(greenlets)
+    greenlets.extend([cam._g for cam in cam_feeders.values()])
 
 
 if __name__ == '__main__':
     run()
+
+    # Wait for greenlets
+    gevent.joinall(greenlets)

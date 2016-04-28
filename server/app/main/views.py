@@ -30,6 +30,11 @@ def cam(cam_id):
 
     frame = rdb.get(cam_key + ":lastframe")
 
+    # Mark the cam as active. This signals the feeder so that it starts working on this. It could potentially
+    # be made more efficient by working in a background
+    # thread, but that would be overkill for now.
+    rdb.setex(cam_key + ":active", 30, 1)
+
     if frame is None:
         # We check whether the feeder itself is alive to be able to give a proper error,
         # even if, for now, we don't.
@@ -49,11 +54,6 @@ def cam(cam_id):
             img.save(sio_out, 'jpeg')
             frame = sio_out.getvalue()
             img.close()
-
-        # Mark the cam as active. This signals the feeder so that it starts working on this. It could potentially
-        # be made more efficient by working in a background
-        # thread, but that would be overkill for now.
-        rdb.setex(cam_key + ":active", 30, 1)
 
         return Response(frame, status=200, mimetype="image/jpeg")
 

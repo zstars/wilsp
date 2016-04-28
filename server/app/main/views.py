@@ -16,14 +16,16 @@ def cam(cam_id):
     :param cam_id:
     :return:
     """
-    alive = rdb.get("wilsa:feeder:alive")
-    if alive is None:
-        return "Feeder is down. Cam id: " + cam_id
+    REDIS_PREFIX = current_app.config['REDIS_PREFIX']
 
-    cam_key = "wilsa:cams:" + cam_id + ":lastframe"
+    alive = rdb.get(REDIS_PREFIX + ":feeder:alive")
+    if alive is None:
+        return current_app.send_static_file('no_image_available.png')
+
+    cam_key = REDIS_PREFIX + ":cams:" + cam_id + ":lastframe"
     frame = rdb.get(cam_key)
     if frame is None:
-        return "No frame available for: " + cam_key
+        return current_app.send_static_file('no_image_available.png')
     else:
         return Response(frame, status=200, mimetype="image/jpeg")
 

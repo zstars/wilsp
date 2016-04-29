@@ -60,7 +60,8 @@ def run():
     # Create every cam feeder
     for cam_name, cam in cams.items():
         print('Adding cam {0} to the dict'.format(cam_name))
-        cf = CamFeeder(rdb, REDIS_PREFIX, cam_name, cam['url'])
+        rotation = float(cam['rotation'])
+        cf = CamFeeder(rdb, REDIS_PREFIX, cam_name, cam['url'], rotation)
         cam_feeders[cam_name] = cf
         cf.start()
 

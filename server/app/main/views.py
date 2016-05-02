@@ -1,9 +1,10 @@
 import io
-from datetime import datetime
+
 from PIL import Image
-from flask import render_template, session, redirect, url_for, current_app, make_response, Response, request
-from . import main
+from flask import render_template, current_app, make_response, Response, request, stream_with_context
+
 from app import rdb
+from . import main
 
 
 @main.route('/')
@@ -66,8 +67,9 @@ def cam_mjpeg(cam_id):
     """
     rotate = request.values.get("rotate", 0)
     REDIS_PREFIX = current_app.config['REDIS_PREFIX']
+    # TODO: Not pretty.
     not_available = open("app/static/no_image_available.png", "rb").read()
-    return Response(generator_mjpeg(cam_id, not_available, REDIS_PREFIX, rotate), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(stream_with_context(generator_mjpeg(cam_id, not_available, REDIS_PREFIX, rotate)), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 def test_gen(data):
     n = 0

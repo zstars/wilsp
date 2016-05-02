@@ -13,7 +13,7 @@ class CamFeeder(object):
     SLEEP_TIME_INACTIVE = 0.1 # Wait for x seconds after checking and being found inactive.
     DEBUG = False
 
-    def __init__(self, rdb, redis_prefix, cam_name, url, rotation = None):
+    def __init__(self, rdb, redis_prefix, cam_name, url, rotation=None):
         self._g = None
         self._rdb = rdb # type: redis.StrictRedis
         self._redis_prefix = redis_prefix
@@ -27,6 +27,15 @@ class CamFeeder(object):
 
         self._active_since = None  # Timestamp when we last became active
         self._frames_count = 0  # Frames count in the last active period.
+
+    def grab_frame(self):
+        """
+        Grabs a frame. It will use the specified URL. Some special protocols may eventually be supported.
+        :return:
+        """
+        rs = [grequests.get(self._url, stream=True)]
+        r = grequests.map(rs)[0]
+        return r.content
 
     def run(self):
         print("Running CamFeeder on URL {0}".format(self._url))
@@ -57,9 +66,7 @@ class CamFeeder(object):
 
             if self._active:
                 # Request the image and get the data
-                rs = [grequests.get(self._url, stream=True)]
-                r = grequests.map(rs)[0]
-                data = r.content
+                data = self.grab_frame()
 
                 # Rotate the image if necessary
                 if self._rotation > 0:

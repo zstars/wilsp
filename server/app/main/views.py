@@ -11,6 +11,77 @@ def index():
     return render_template('base.html')
 
 
+def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
+    try:
+        rotate = float(rotate)
+    except ValueError:
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + not_available + b'\r\n')
+        return make_response("Wrong value: Rotate must be a float", 400)
+
+    cam_key = redis_prefix + ":cams:" + cam_id
+
+    while True:
+        print("[DBG]: Serving MJPEG frame")
+
+        frame = rdb.get(cam_key + ":lastframe")
+
+        # Mark the cam as active. This signals the feeder so that it starts working on this. It could potentially
+        # be made more efficient by working in a background
+        # thread, but that would be overkill for now.
+        rdb.setex(cam_key + ":active", 30, 1)
+
+        if frame is None:
+            # We check whether the feeder itself is alive to be able to give a proper error,
+            # even if, for now, we don't.
+            alive = rdb.get(redis_prefix + ":feeder:alive")
+            if alive is None:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + not_available + b'\r\n')
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + not_available + b'\r\n')
+        else:
+            # It will also be possible to rotate the image via the actual definition of the camera, which will be
+            # more efficient because it means that the rotated image will be cached in redis.
+            if rotate > 0:
+                sio_in = io.BytesIO(frame)
+                img = Image.open(sio_in)  # type: Image
+                img = img.rotate(rotate, expand=True)
+                sio_out = io.BytesIO()
+                img.save(sio_out, 'jpeg')
+                frame = sio_out.getvalue()
+                img.close()
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
+@main.route('/cams/<cam_id>/mjpeg')
+def cam_mjpeg(cam_id):
+    """
+    Returns a stream for the specified camera.
+    :param cam_id:
+    :return:
+    """
+    rotate = request.values.get("rotate", 0)
+    REDIS_PREFIX = current_app.config['REDIS_PREFIX']
+    not_available = open("app/static/no_image_available.png", "rb").read()
+    return Response(generator_mjpeg(cam_id, not_available, REDIS_PREFIX, rotate), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+def test_gen(data):
+    n = 0
+    while True:
+        n += 1
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + data + b'\r\n')
+
+@main.route('/cams/tests/test')
+def cams_tests_test():
+    data = open("app/static/no_image_available.png", "rb").read()
+    return Response(test_gen(data), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
 @main.route('/cams/<cam_id>')
 def cam(cam_id):
     """
@@ -56,5 +127,3 @@ def cam(cam_id):
             img.close()
 
         return Response(frame, status=200, mimetype="image/jpeg")
-
-

@@ -11,7 +11,7 @@ class CamFeeder(object):
     TARGET_FPS = 15
     ACTIVE_CHECK_PERIOD = 0.1 # Check if webcam is active every 10 seconds.
     SLEEP_TIME_INACTIVE = 0.1 # Wait for x seconds after checking and being found inactive.
-    DEBUG = True
+    DEBUG = False
 
     def __init__(self, rdb, redis_prefix, cam_name, url, rotation = None):
         self._g = None

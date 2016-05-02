@@ -40,9 +40,9 @@ def cam(cam_id):
         # even if, for now, we don't.
         alive = rdb.get(REDIS_PREFIX + ":feeder:alive")
         if alive is None:
-            return current_app.send_static_file('no_image_available.png')
+            return current_app.send_static_file('no_image_available.png'), 400
 
-        return current_app.send_static_file('no_image_available.png')
+        return current_app.send_static_file('no_image_available.png'), 400
     else:
         # It will also be possible to rotate the image via the actual definition of the camera, which will be
         # more efficient because it means that the rotated image will be cached in redis.

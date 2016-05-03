@@ -6,12 +6,18 @@ import io
 from PIL import Image
 
 
+class FrameGrabbingException(Exception):
+
+    def __init__(self, msg, cause = None):
+        super().__init__(msg, cause)
+
+
 class CamFeeder(object):
 
-    TARGET_FPS = 15
-    ACTIVE_CHECK_PERIOD = 0.1 # Check if webcam is active every 10 seconds.
-    SLEEP_TIME_INACTIVE = 0.1 # Wait for x seconds after checking and being found inactive.
-    DEBUG = False
+    TARGET_FPS = 150
+    ACTIVE_CHECK_PERIOD = 0.01 # Check if webcam is active every X seconds.
+    SLEEP_TIME_INACTIVE = 0.01 # Wait for x seconds after checking and being found inactive.
+    DEBUG = True
 
     def __init__(self, rdb, redis_prefix, cam_name, url, rotation=None):
         self._g = None
@@ -33,9 +39,19 @@ class CamFeeder(object):
         Grabs a frame. It will use the specified URL. Some special protocols may eventually be supported.
         :return:
         """
-        rs = [grequests.get(self._url, stream=True)]
-        r = grequests.map(rs)[0]
-        return r.content
+        try:
+            rs = [grequests.get(self._url, stream=True)]
+            r = grequests.map(rs)[0]
+            if r.status_code != 200:
+                raise FrameGrabbingException("Status code is not 200")
+            content = r.content
+            if len(content) < 100:
+                raise FrameGrabbingException("Retrieved content is too small")
+            return content
+        except FrameGrabbingException:
+            raise
+        except Exception as exc:
+            raise FrameGrabbingException("Exception occurred", exc)
 
     def run(self):
         print("Running CamFeeder on URL {0}".format(self._url))
@@ -65,24 +81,30 @@ class CamFeeder(object):
                         print("CURRENT ACTIVE PERIOD FPS: {}".format(self._frames_count / (time.time() - self._active_since)))
 
             if self._active:
-                # Request the image and get the data
-                data = self.grab_frame()
 
-                # Rotate the image if necessary
-                if self._rotation > 0:
-                    sio_in = io.BytesIO(data)
-                    img = Image.open(sio_in)  # type: Image
-                    img = img.rotate(self._rotation, expand=True)
-                    sio_out = io.BytesIO()
-                    img.save(sio_out, 'jpeg')
-                    data = sio_out.getvalue()
-                    img.close()
+                try:
+                    # Request the image and get the data
+                    data = self.grab_frame()
 
-                # Put the data into redis
-                # Set a relatively early expire to ensure that wrong images do not stay for long
-                self._rdb.setex("{}:cams:{}:lastframe".format(self._redis_prefix, self._cam_name), 10, data)
+                    # Rotate the image if necessary
+                    if self._rotation > 0:
+                        sio_in = io.BytesIO(data)
+                        img = Image.open(sio_in)  # type: Image
+                        img = img.rotate(self._rotation, expand=True)
+                        sio_out = io.BytesIO()
+                        img.save(sio_out, 'jpeg')
+                        data = sio_out.getvalue()
+                        img.close()
 
-                self._frames_count += 1
+                    # Put the data into redis
+                    # Set a relatively early expire to ensure that wrong images do not stay for long
+                    self._rdb.setex("{}:cams:{}:lastframe".format(self._redis_prefix, self._cam_name), 10, data)
+
+                    self._frames_count += 1
+
+                except FrameGrabbingException as exc:
+                    print("[ERROR]: Error trying to grab frame.")
+                    self._rdb.setex("{}:cams:{}:error".format(self._redis_prefix, self._cam_name), 10, repr(exc))
 
             cur_time = time.time()
 

@@ -1,4 +1,5 @@
 import io
+import gevent
 
 from PIL import Image
 from flask import render_template, current_app, make_response, Response, request, stream_with_context
@@ -39,6 +40,11 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
             if alive is None:
                 yield (b'--frame\r\n'
                        b'Content-Type: image/jpeg\r\n\r\n' + not_available + b'\r\n')
+
+            # If there is no error, we just retry: the webcam image should be available soon.
+            if current_app.config.get('WAIT_FOR_WEBCAM', False):
+                gevent.sleep(current_app.config.get('WAIT_FOR_WEBCAM_TIME', 0.1))
+                continue
 
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + not_available + b'\r\n')
@@ -101,31 +107,42 @@ def cam(cam_id):
 
     cam_key = REDIS_PREFIX + ":cams:" + cam_id
 
-    frame = rdb.get(cam_key + ":lastframe")
+    # We will retry under some circumstances.
+    while True:
 
-    # Mark the cam as active. This signals the feeder so that it starts working on this. It could potentially
-    # be made more efficient by working in a background
-    # thread, but that would be overkill for now.
-    rdb.setex(cam_key + ":active", 30, 1)
+        frame = rdb.get(cam_key + ":lastframe")
 
-    if frame is None:
-        # We check whether the feeder itself is alive to be able to give a proper error,
-        # even if, for now, we don't.
-        alive = rdb.get(REDIS_PREFIX + ":feeder:alive")
-        if alive is None:
-            return current_app.send_static_file('no_image_available.png'), 400
+        # Mark the cam as active. This signals the feeder so that it starts working on this. It could potentially
+        # be made more efficient by working in a background
+        # thread, but that would be overkill for now.
+        rdb.setex(cam_key + ":active", 30, 1)
 
-        return current_app.send_static_file('no_image_available.png'), 400
-    else:
-        # It will also be possible to rotate the image via the actual definition of the camera, which will be
-        # more efficient because it means that the rotated image will be cached in redis.
-        if rotate > 0:
-            sio_in = io.BytesIO(frame)
-            img = Image.open(sio_in)  # type: Image
-            img = img.rotate(rotate, expand=True)
-            sio_out = io.BytesIO()
-            img.save(sio_out, 'jpeg')
-            frame = sio_out.getvalue()
-            img.close()
+        if frame is None:
+            # We check whether the feeder itself is alive to be able to give a proper error,
+            # even if, for now, we don't.
+            alive = rdb.get(REDIS_PREFIX + ":feeder:alive")
+            if alive is None:
+                return current_app.send_static_file('no_image_available.png'), 400
 
-        return Response(frame, status=200, mimetype="image/jpeg")
+            # Check whether the webcam is explicitly reporting an error. If it does, we just return not-available.
+            err = rdb.get(cam_key + ":error")
+            if err is not None:
+                return current_app.send_static_file('no_image_available.png'), 400
+
+            # If there is no error, we just retry: the webcam image should be available soon.
+            if current_app.config.get('WAIT_FOR_WEBCAM', False):
+                gevent.sleep(current_app.config.get('WAIT_FOR_WEBCAM_TIME', 0.1))
+                continue
+        else:
+            # It will also be possible to rotate the image via the actual definition of the camera, which will be
+            # more efficient because it means that the rotated image will be cached in redis.
+            if rotate > 0:
+                sio_in = io.BytesIO(frame)
+                img = Image.open(sio_in)  # type: Image
+                img = img.rotate(rotate, expand=True)
+                sio_out = io.BytesIO()
+                img.save(sio_out, 'jpeg')
+                frame = sio_out.getvalue()
+                img.close()
+
+            return Response(frame, status=200, mimetype="image/jpeg")

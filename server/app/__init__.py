@@ -1,4 +1,8 @@
 
+
+from gevent import monkey
+monkey.patch_all()
+
 from flask import Flask, render_template
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.mail import Mail
@@ -8,7 +12,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from redis import StrictRedis
 
 from config import config
-
 
 bootstrap = Bootstrap()
 mail = Mail()

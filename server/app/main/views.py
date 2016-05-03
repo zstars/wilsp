@@ -12,6 +12,11 @@ from . import main
 def index():
     return render_template('base.html')
 
+@main.route('/test')
+def test():
+    return render_template('dash.html')
+
+count = 0
 
 def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
     try:
@@ -24,7 +29,10 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
     cam_key = redis_prefix + ":cams:" + cam_id
 
     while True:
-        print("[DBG]: Serving MJPEG frame")
+        global count
+        print("[DBG]: Serving MJPEG frame: %d" % count)
+        count += 1
+        # gevent.sleep(1/30.0)
 
         frame = rdb.get(cam_key + ":lastframe")
 

@@ -12,8 +12,8 @@ if WILSASERVER_DIR == '':
 sys.path.insert(0, WILSASERVER_DIR)
 os.chdir(WILSASERVER_DIR)
 
-sys.stdout = open('stdout.txt', 'w', 0)
-sys.stderr = open('stderr.txt', 'w', 0)
+sys.stdout = open('stdout.txt', 'w', 100)
+sys.stderr = open('stderr.txt', 'w', 100)
 
 
 application = create_app('deployment')

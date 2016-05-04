@@ -1,5 +1,6 @@
 import io
 import gevent
+import time
 
 from PIL import Image
 from flask import render_template, current_app, make_response, Response, request, stream_with_context
@@ -28,11 +29,30 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
 
     cam_key = redis_prefix + ":cams:" + cam_id
 
+    target_fps = 30
+
+    last_frame_start_time = 0
+
     while True:
+
         global count
         print("[DBG]: Serving MJPEG frame: %d" % count)
         count += 1
-        # gevent.sleep(1/30.0)
+
+        # FPS rate limiting
+        target_frame_time = 1.0 / target_fps
+        current_time = time.time()
+        time_since_last_frame_start = current_time - last_frame_start_time
+
+        time_to_wait = target_frame_time - time_since_last_frame_start
+        if time_to_wait > 0:
+            print("Sleeping for: %f" % time_to_wait)
+            gevent.sleep(time_to_wait)
+            last_frame_start_time = current_time + time_to_wait
+        else:
+            print("Sleeping for 0")
+            # We cannot keep up. Maybe we should lower the target FPS.
+            last_frame_start_time = current_time
 
         frame = rdb.get(cam_key + ":lastframe")
 

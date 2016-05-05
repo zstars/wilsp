@@ -55,7 +55,7 @@ def run():
     cams = data['cams']  # type: dict
 
     # Connect to the redis instance
-    rdb = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+    rdb = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True)
 
     # Create every cam feeder
     for cam_name, cam in cams.items():

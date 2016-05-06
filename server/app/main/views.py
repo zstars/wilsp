@@ -17,6 +17,10 @@ def index():
 def test():
     return render_template('dash.html')
 
+@main.route('/test_socketio')
+def test_socketio():
+    return render_template('socketio/test.html')
+
 count = 0
 
 def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):

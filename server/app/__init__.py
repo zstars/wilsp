@@ -1,7 +1,4 @@
-
-
-from gevent import monkey
-monkey.patch_all()
+from flask.ext.socketio import SocketIO
 
 from flask import Flask, render_template
 from flask.ext.bootstrap import Bootstrap
@@ -17,12 +14,16 @@ bootstrap = Bootstrap()
 mail = Mail()
 moment = Moment()
 # db = SQLAlchemy()
+socketio = SocketIO()
 rdb = None
 
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
+
+    from .main import main as main_blueprint
+    app.register_blueprint(main_blueprint)
 
     bootstrap.init_app(app)
     mail.init_app(app)
@@ -31,8 +32,6 @@ def create_app(config_name):
     global rdb
     rdb = FlaskRedis.from_custom_provider(StrictRedis, app)
     rdb.init_app(app)
-
-    from .main import main as main_blueprint
-    app.register_blueprint(main_blueprint)
+    socketio.init_app(app)
 
     return app

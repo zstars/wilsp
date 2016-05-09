@@ -21,6 +21,10 @@ def test():
 def test_socketio():
     return render_template('socketio/test.html')
 
+@main.route('/test_streaming')
+def test_streaming():
+    return render_template('ws/stream-example.html')
+
 count = 0
 
 def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):

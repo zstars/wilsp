@@ -1,5 +1,3 @@
-
-
 import os
 import signal
 import sys
@@ -8,8 +6,7 @@ import gevent
 import redis
 import yaml
 
-from CamFeeder import CamFeeder
-
+from camfeeder.old.CamFeeder import CamFeeder
 
 # Pre-set the working directory.
 abspath = os.path.abspath(__file__)

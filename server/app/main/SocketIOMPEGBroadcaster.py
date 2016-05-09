@@ -6,7 +6,7 @@ from io import BytesIO
 
 
 
-class SocketIOBroadcaster(object):
+class SocketIOMPEGBroadcaster(object):
 
     def run(self):
         print("Running SocketIO broadcaster")

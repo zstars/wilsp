@@ -21,9 +21,9 @@ def test():
 def test_socketio():
     return render_template('socketio/test.html')
 
-@main.route('/test_streaming')
+@main.route('/test_mjpeg_streaming')
 def test_streaming():
-    return render_template('ws/stream-example.html')
+    return render_template('wsmjpeg/stream-example.html')
 
 count = 0
 

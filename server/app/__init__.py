@@ -15,7 +15,7 @@ mail = Mail()
 moment = Moment()
 # db = SQLAlchemy()
 socketio = SocketIO()
-rdb = None
+rdb = FlaskRedis(strict=True)
 
 def create_app(config_name):
     app = Flask(__name__)
@@ -29,8 +29,7 @@ def create_app(config_name):
     mail.init_app(app)
     moment.init_app(app)
     # db.init_app(app)
-    global rdb
-    rdb = FlaskRedis.from_custom_provider(StrictRedis, app)
+
     rdb.init_app(app)
     socketio.init_app(app)
 

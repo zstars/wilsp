@@ -4,7 +4,7 @@ import redis
 from run import REDIS_HOST, REDIS_PORT, REDIS_DB
 
 
-class FeederTest(unittest.TestCase):
+class FeederTestBase(unittest.TestCase):
     """
     Common test base class for Feeder tests, which can start servers.
     Based on: https://gist.github.com/twolfson/13f5f5784f67fd49b245
@@ -16,11 +16,11 @@ class FeederTest(unittest.TestCase):
         Runs the setUp of classes that inherit from this one.
         :return:
         """
-        if cls is not FeederTest and cls.setUp is not FeederTest.setUp:
+        if cls is not FeederTestBase and cls.setUp is not FeederTestBase.setUp:
             orig_setUp = cls.setUp
 
             def setUpOverride(self, *args, **kwargs):
-                FeederTest.setUp(self)
+                FeederTestBase.setUp(self)
                 return orig_setUp(self, *args, **kwargs)
 
             cls.setUp = setUpOverride

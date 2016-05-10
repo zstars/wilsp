@@ -3,11 +3,12 @@ import gevent
 
 from FeederTest import FeederTest
 import run
+from FeederTestBase import FeederTestBase
 
 from run import REDIS_PREFIX
 
 
-class TestWatchdog(FeederTest):
+class TestWatchdog(FeederTestBase):
 
     def setUp(self):
         run.run()  # This starts running the greenlets but does not block.

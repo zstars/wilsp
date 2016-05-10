@@ -7,16 +7,6 @@ import time
 from PIL import Image
 
 
-class FrameGrabbingException(Exception):
-    """
-    Exception is internally raised when an attempt to get a frame from the webcam fails, or
-    when the content is invalid.
-    """
-
-    def __init__(self, msg: str, cause=None):
-        super().__init__(msg, cause)
-
-
 class CamFeeder(object):
     """
     CamFeeder abstract base class. Children CamFeeders should at least implement the _run_until_inactive method.
@@ -40,7 +30,7 @@ class CamFeeder(object):
         self._rotation = rotation if rotation is not None else 0
         self._max_fps = max_fps
 
-        self._frames_this_cycle = None
+        self._frames_this_cycle = 0
         self._active = None  # Whether the camera is active or not (being used, according to redis)
         self._active_since = None  # Timestamp when we last became active
 
@@ -68,12 +58,12 @@ class CamFeeder(object):
     ########################################################
 
     @abstractmethod
-    def _run_until_inactive(self) -> None:
+    def _run_until_inactive(self) -> None:  # pragma: no cover
         """
         Runs, feeding images to redis, until it is time to become inactive.
         :return:
         """
-        raise NotImplementedError("_run_until_active should be implemented")
+        pass
 
     def _wait_until_active(self) -> None:
         """
@@ -150,6 +140,6 @@ class CamFeeder(object):
         self._notify_frame_put()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     import doctest
     doctest.testmod()

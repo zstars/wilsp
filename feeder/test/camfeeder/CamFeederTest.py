@@ -3,6 +3,7 @@ import hashlib
 
 import gevent
 import redis
+import time
 from mockredis import mock_strict_redis_client
 from FeederTestBase import FeederTestBase
 from camfeeder.CamFeeder import CamFeeder
@@ -27,10 +28,25 @@ class TestBasic(FeederTestBase):
         pass
 
     def test_rotates(self):
+        """
+        Ensure standard rotation works.
+        :return:
+        """
         r = self.cf._rotated(self.img, 80.5)
         r_md5 = hashlib.md5(r).hexdigest()
         self.assertIsNotNone(r)
         self.assertEquals('d27e3eea81060a69e9d62d2343fe5bcb', r_md5)
+
+    def test_rotates_nothing_when_0(self):
+        """
+        Ensure if rotation is 0 the image does not change.
+        :return:
+        """
+        r_md5_before = hashlib.md5(self.img).hexdigest()
+        r = self.cf._rotated(self.img, 0)
+        self.assertIsNotNone(r)
+        r_md5_after = hashlib.md5(r).hexdigest()
+        self.assertEquals(r_md5_before, r_md5_after)
 
     def test_put_frame(self):
         self.cf._frames_this_cycle = 0
@@ -49,6 +65,29 @@ class TestBasic(FeederTestBase):
         self.rdb.delete('wilsat:cams:archimedes:active')
         self.cf._check_active()
         self.assertFalse(self.cf._active)  # We are marked as inactive
+
+    def test_get_fps(self):
+        """
+        Checks the FPS calculations.
+        :return:
+        """
+        self.cf._frames_this_cycle = 200
+        curtime = time.time()
+        self.cf._active_since = curtime - 10
+        fps = self.cf.get_current_fps()
+
+        max_expected_fps = 200 / 10
+        min_expected_fps = 200 / 12  # Two seconds elapsed at most while calculating.
+        self.assertTrue(min_expected_fps <= fps <= max_expected_fps)
+
+    def test_get_fps_when_0(self):
+        """
+        Check that it returns 0 and does not explode if elapsed is 0.
+        :return:
+        """
+        self.cf._active_since = time.time()
+        fps = self.cf.get_current_fps()
+        self.assertEquals(0, fps)
 
 
 class ConcreteCamFeeder(CamFeeder):
@@ -109,6 +148,10 @@ class TestRun(FeederTestBase):
         gevent.sleep(0.1)
         self.assertEquals(1, self.cf._times_active)
         self.assertEquals(2, self.cf._times_inactive)
+
+        # Should activate
+        self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
+        gevent.sleep(0.1)
 
     def tearDown(self):
         gevent.kill(self._g)

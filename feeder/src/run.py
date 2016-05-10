@@ -6,7 +6,6 @@ import gevent
 import redis
 import yaml
 
-from camfeeder.old.CamFeeder import CamFeeder
 
 # Pre-set the working directory.
 abspath = os.path.abspath(__file__)
@@ -41,36 +40,37 @@ def watchdog(rdb):
 
 
 def run():
-    global greenlets
-
-    # Register exit handler
-    signal.signal(signal.SIGINT, signal_handler)
-    print('Press Ctrl+C to exit.')
-
-    # Load the cameras configuration
-    data = yaml.load(open(CAMS_FILE, 'r'))
-    cams = data['cams']  # type: dict
-
-    # Connect to the redis instance
-    rdb = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True)
-
-    # Create every cam feeder
-    for cam_name, cam in cams.items():
-        print('Adding cam {0} to the dict'.format(cam_name))
-        if 'rotation' in cam:
-            rotation = float(cam['rotation'])
-        else:
-            rotation = 0.0
-        cf = CamFeeder(rdb, REDIS_PREFIX, cam_name, cam['url'], rotation)
-        cam_feeders[cam_name] = cf
-        cf.start()
-
-    # Create the watchdog
-    g = gevent.spawn(watchdog, rdb)
-    greenlets.append(g)
-
-    # Wait for all the greenlets
-    greenlets.extend([cam._g for cam in cam_feeders.values()])
+    pass
+    # global greenlets
+    #
+    # # Register exit handler
+    # signal.signal(signal.SIGINT, signal_handler)
+    # print('Press Ctrl+C to exit.')
+    #
+    # # Load the cameras configuration
+    # data = yaml.load(open(CAMS_FILE, 'r'))
+    # cams = data['cams']  # type: dict
+    #
+    # # Connect to the redis instance
+    # rdb = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True)
+    #
+    # # Create every cam feeder
+    # for cam_name, cam in cams.items():
+    #     print('Adding cam {0} to the dict'.format(cam_name))
+    #     if 'rotation' in cam:
+    #         rotation = float(cam['rotation'])
+    #     else:
+    #         rotation = 0.0
+    #     cf = CamFeeder(rdb, REDIS_PREFIX, cam_name, cam['url'], rotation)
+    #     cam_feeders[cam_name] = cf
+    #     cf.start()
+    #
+    # # Create the watchdog
+    # g = gevent.spawn(watchdog, rdb)
+    # greenlets.append(g)
+    #
+    # # Wait for all the greenlets
+    # greenlets.extend([cam._g for cam in cam_feeders.values()])
 
 
 if __name__ == '__main__':

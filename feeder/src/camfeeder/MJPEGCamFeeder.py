@@ -3,6 +3,8 @@ import grequests
 import redis
 import time
 
+import requests
+
 from camfeeder.CamFeeder import CamFeeder
 
 
@@ -21,12 +23,17 @@ class MJPEGCamFeeder(CamFeeder):
                  rotation: float = None):
         super(MJPEGCamFeeder, self).__init__(rdb, redis_prefix, cam_name, url, max_fps, rotation)
 
+        self._request_response = None  # type: requests.Response
+
     def _run_until_inactive(self):
         """
         Will just keep pushing images and checking the active status until
         the camera should not be active anymore.
         :return:
         """
+
+        self._start_streaming_request()
+
         while self._active:
 
             update_start_time = time.time()
@@ -48,21 +55,18 @@ class MJPEGCamFeeder(CamFeeder):
             else:
                 gevent.sleep(time_left)
 
-    def _grab_frame(self) -> bytes:
+    def _start_streaming_request(self) -> None:
         """
-        Grabs a frame. It will use the specified URL. Some special protocols may eventually be supported.
+        Starts a streaming session. The endpoint should be a multipart/x-mixed-replace MJPEG stream.
+        Because the FPS is set by the remote server, desync issues can arise. Those desync issues can
+        set a very high capture-store latency, so we will have to detect and handle them by restarting
+        the stream.
+
+        Post-condition: Ready to start reading the self._request_response
         :return:
         """
-        try:
-            rs = [grequests.get(self._url, stream=True)]
-            r = grequests.map(rs)[0]
-            if r.status_code != 200:
-                raise FrameGrabbingException("Status code is not 200")
-            content = r.content
-            if len(content) < 100:
-                raise FrameGrabbingException("Retrieved content is too small")
-            return content
-        except FrameGrabbingException:
-            raise
-        except Exception as exc:
-            raise FrameGrabbingException("Exception occurred", exc)
+        r = grequests.get(self._url, stream=True)
+        ar = r.send()
+        self._request_response = ar.response  # type: requests.Response
+        if self._request_response.status_code != 200:
+            raise FrameGrabbingException('Unexpected response: not 200')

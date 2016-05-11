@@ -10,7 +10,7 @@ import time
 
 import requests
 from mockredis import mock_strict_redis_client
-from FeederTestBase import FeederTestBase
+from test.FeederTestBase import FeederTestBase
 from camfeeder.CamFeeder import CamFeeder
 
 # Fix the working path
@@ -42,7 +42,8 @@ class TestBasic(FeederTestBase):
 
         fixed_response = requests.Response()
         fixed_response.status_code = 200
-        fixed_response.raw = io.BytesIO(b'HELLO\nTHERE\nY')
+        fixed_response = open('data/example.mjpeg', 'rb')
+        #fixed_response.raw = io.BytesIO(b'HELLO\nTHERE\nY')
         type(self.get_mock.return_value.send.return_value).response = PropertyMock(return_value=fixed_response)
 
         # Advanced DARK MAGICKS. Would be nice to find a less contrived way to do this.

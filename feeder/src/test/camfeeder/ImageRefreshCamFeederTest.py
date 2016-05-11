@@ -10,7 +10,7 @@ import time
 
 import requests
 from mockredis import mock_strict_redis_client
-from FeederTestBase import FeederTestBase
+from test.FeederTestBase import FeederTestBase
 from camfeeder.CamFeeder import CamFeeder
 
 # Fix the working path

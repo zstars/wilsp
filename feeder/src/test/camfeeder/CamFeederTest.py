@@ -5,10 +5,11 @@ import gevent
 import redis
 import time
 from mockredis import mock_strict_redis_client
-from FeederTestBase import FeederTestBase
 from camfeeder.CamFeeder import CamFeeder
 
 # Fix the working path
+from test.FeederTestBase import FeederTestBase
+
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(os.path.join(dname, '..'))
@@ -32,10 +33,10 @@ class TestBasic(FeederTestBase):
         Ensure standard rotation works.
         :return:
         """
-        r = self.cf._rotated(self.img, 80.5)
+        r = self.cf._rotated(self.img, 80)
         r_md5 = hashlib.md5(r).hexdigest()
         self.assertIsNotNone(r)
-        self.assertEquals('d27e3eea81060a69e9d62d2343fe5bcb', r_md5)
+        self.assertEquals('ff7fcdfb99a4391b2b1df3898045604b', r_md5)
 
     def test_rotates_nothing_when_0(self):
         """

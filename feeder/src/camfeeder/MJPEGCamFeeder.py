@@ -6,6 +6,8 @@ import redis
 import time
 import requests
 
+from dateutil.parser import parse
+
 from camfeeder.CamFeeder import CamFeeder
 
 
@@ -63,7 +65,6 @@ class MJPEGCamFeeder(CamFeeder):
         :return: Tuple containing the bytes for the file, and the time reported by the server.
         """
         headers = self._parse_headers()
-        print('HEADERS ARE: ', headers)
         content_type = headers.get('content-type')
         if content_type is None:
             raise FrameGrabbingException('Unexpected response: Content type not present')
@@ -88,7 +89,15 @@ class MJPEGCamFeeder(CamFeeder):
                 else:
                     raise FrameGrabbingException('Did not find expected boundary: ', line)
 
-        return (image,0)
+        date = headers['date']
+        if date is None:
+            raise FrameGrabbingException('No date header received')
+
+        # TODO: This will support a very limited number of formats.
+        date = str.join(' ', date.split(' ')[:3])
+        date = parse(date, fuzzy=True)
+
+        return (image, date)
 
     def _parse_headers(self) -> dict:
         """
@@ -96,11 +105,9 @@ class MJPEGCamFeeder(CamFeeder):
         :return: Dictionary with the headers. The dict is not case-insensitive but the keys are converted to lowercase.
         """
         headers = {}
-        print("TYPE: ", type(self._request_response.raw))
         while True:
             line = self._request_response.raw.readline().strip()
             line = line.decode('utf-8')
-            print("LINE: {}".format(line))
             if len(line) == 0:
                 if len(headers) != 0:  # We want to skip initial new-lines.
                     break

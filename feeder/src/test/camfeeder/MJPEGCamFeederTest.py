@@ -69,7 +69,6 @@ class TestBasic(FeederTestBase):
         self.cf._start_streaming_request()
         headers = self.cf._parse_headers()
         self.assertEquals(3, len(headers))
-        print(headers)
 
     def test_parse_next_image(self):
         self.cf._start_streaming_request()
@@ -79,6 +78,10 @@ class TestBasic(FeederTestBase):
 
         self.assertIsNotNone(img_bytes)
         self.assertGreater(len(img_bytes), 100)
+
+        self.assertIsNotNone(date)
+        self.assertEquals(date.year, 2016)
+        self.assertEquals(date.month, 5)
 
         # Try to check whether it's a valid JPEG.
         sio_in = io.BytesIO(img_bytes)

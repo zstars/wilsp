@@ -42,8 +42,7 @@ class TestBasic(FeederTestBase):
 
         fixed_response = requests.Response()
         fixed_response.status_code = 200
-        fixed_response = open('data/example.mjpeg', 'rb')
-        #fixed_response.raw = io.BytesIO(b'HELLO\nTHERE\nY')
+        fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
         type(self.get_mock.return_value.send.return_value).response = PropertyMock(return_value=fixed_response)
 
         # Advanced DARK MAGICKS. Would be nice to find a less contrived way to do this.
@@ -59,6 +58,19 @@ class TestBasic(FeederTestBase):
 
         self.assertGreater(idx, 0)
 
+    def test_parse_headers(self):
+        self.cf._start_streaming_request()
+        print("ENC: ", self.cf._request_response)
+        headers = self.cf._parse_headers()
+        self.assertEquals(3, len(headers))
+        print(headers)
+
+    def test_parse_next_image(self):
+        self.cf._start_streaming_request()
+        result = self.cf._parse_next_image()
+
+        print("{}...{}".format(result[0][1:30], result[0][-5:]))
+        open('remove.jpg', 'wb').write(result[0])
 
     def tearDown(self):
         pass

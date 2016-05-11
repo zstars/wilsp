@@ -1,8 +1,9 @@
+import io
+
 import gevent
 import grequests
 import redis
 import time
-
 import requests
 
 from camfeeder.CamFeeder import CamFeeder
@@ -54,6 +55,47 @@ class MJPEGCamFeeder(CamFeeder):
                 gevent.sleep(0)
             else:
                 gevent.sleep(time_left)
+
+    def _parse_next_image(self) -> (bytes, int):
+        """
+        Retrieves the next image from the stream.
+        :return: Tuple containing the bytes for the file, and the time reported by the server.
+        """
+        headers = self._parse_headers()
+        print('HEADERS ARE: ', headers)
+        content_type = headers.get('content-type')
+        if content_type is None:
+            raise FrameGrabbingException('Unexpected response: Content type not present')
+        if content_type != 'image/jpeg':
+            raise FrameGrabbingException('Unexpected response: Content type is not a JPEG image')
+        content_length = headers.get('content-length')
+        if content_length is None:
+            raise FrameGrabbingException('No content-length available')
+        content_length = int(content_length)
+
+        image = self._request_response.raw.read(content_length)
+        if len(image) != content_length:
+            raise FrameGrabbingException('Unexpected length of retrieved image')
+
+        return (image,0)
+
+    def _parse_headers(self) -> dict:
+        """
+        Reads HTTP headers from the stream.
+        :return: Dictionary with the headers. The dict is not case-insensitive but the keys are converted to lowercase.
+        """
+        headers = {}
+        print("TYPE: ", type(self._request_response.raw))
+        while True:
+            line = self._request_response.raw.readline().strip()
+            line = line.decode('utf-8')
+            print("LINE: {}".format(line))
+            if len(line) == 0:
+                break
+            key, val = line.split(':', 1)  # type: str, str
+            headers[key.lower()] = val.strip()
+        return headers
+
 
     def _start_streaming_request(self) -> None:
         """

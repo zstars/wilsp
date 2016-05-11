@@ -43,6 +43,7 @@ class TestBasic(FeederTestBase):
 
         fixed_response = requests.Response()
         fixed_response.status_code = 200
+        fixed_response.headers['content-type'] = 'multipart/x-mixed-replace;boundary=--video boundary--'
         fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
         type(self.get_mock.return_value.send.return_value).response = PropertyMock(return_value=fixed_response)
 
@@ -59,9 +60,13 @@ class TestBasic(FeederTestBase):
 
         self.assertGreater(idx, 0)
 
+    def test_start_streaming_request(self):
+        self.cf._start_streaming_request()
+        self.assertIsNotNone(self.cf._request_response_boundary)
+        self.assertEquals('--video boundary--', self.cf._request_response_boundary)
+
     def test_parse_headers(self):
         self.cf._start_streaming_request()
-        print("ENC: ", self.cf._request_response)
         headers = self.cf._parse_headers()
         self.assertEquals(3, len(headers))
         print(headers)
@@ -81,7 +86,6 @@ class TestBasic(FeederTestBase):
         self.assertIsNotNone(img)
 
         # Parse the second one
-        print("PARSING SECOND IMAGE")
         img_bytes, date = self.cf._parse_next_image()
 
         self.assertIsNotNone(img_bytes)

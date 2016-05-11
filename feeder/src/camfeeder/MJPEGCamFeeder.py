@@ -25,6 +25,7 @@ class MJPEGCamFeeder(CamFeeder):
         super(MJPEGCamFeeder, self).__init__(rdb, redis_prefix, cam_name, url, max_fps, rotation)
 
         self._request_response = None  # type: requests.Response
+        self._request_response_boundary = None  # type: str
 
     def _run_until_inactive(self):
         """
@@ -80,8 +81,12 @@ class MJPEGCamFeeder(CamFeeder):
         # Now skip until the boundary is reached.
         while True:
             line = self._request_response.raw.readline().strip()
-            if b'boundary' in line:
-                break
+            line = line.decode('utf-8')
+            if len(line) > 0:
+                if line == self._request_response_boundary:
+                    break
+                else:
+                    raise FrameGrabbingException('Did not find expected boundary: ', line)
 
         return (image,0)
 
@@ -122,3 +127,18 @@ class MJPEGCamFeeder(CamFeeder):
         self._request_response = ar.response  # type: requests.Response
         if self._request_response.status_code != 200:
             raise FrameGrabbingException('Unexpected response: not 200')
+
+        headers = self._request_response.headers
+        content_type = headers['content-type']
+        if content_type is None:
+            raise FrameGrabbingException('Content-type not provided')
+
+        ctype, boundary = content_type.split(';', 1)
+        ctype = ctype.strip()
+
+        if ctype != 'multipart/x-mixed-replace':
+            raise FrameGrabbingException('Response content type is not multipart/x-mixed-replace')
+
+        boundary = boundary.split('=', 1)[1].strip()
+
+        self._request_response_boundary = boundary

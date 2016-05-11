@@ -9,6 +9,7 @@ import redis
 import time
 
 import requests
+from PIL import Image
 from mockredis import mock_strict_redis_client
 from test.FeederTestBase import FeederTestBase
 from camfeeder.CamFeeder import CamFeeder
@@ -67,10 +68,32 @@ class TestBasic(FeederTestBase):
 
     def test_parse_next_image(self):
         self.cf._start_streaming_request()
-        result = self.cf._parse_next_image()
 
-        print("{}...{}".format(result[0][1:30], result[0][-5:]))
-        open('remove.jpg', 'wb').write(result[0])
+        # Parse first image from the stream
+        img_bytes, date = self.cf._parse_next_image()
+
+        self.assertIsNotNone(img_bytes)
+        self.assertGreater(len(img_bytes), 100)
+
+        # Try to check whether it's a valid JPEG.
+        sio_in = io.BytesIO(img_bytes)
+        img = Image.open(sio_in)
+        self.assertIsNotNone(img)
+
+        # Parse the second one
+        print("PARSING SECOND IMAGE")
+        img_bytes, date = self.cf._parse_next_image()
+
+        self.assertIsNotNone(img_bytes)
+        self.assertGreater(len(img_bytes), 100)
+
+        # Try to check whether it's a valid JPEG.
+        sio_in = io.BytesIO(img_bytes)
+        img = Image.open(sio_in)
+        self.assertIsNotNone(img)
+
+
+        open('remove.jpg', 'wb').write(img_bytes)
 
     def tearDown(self):
         pass

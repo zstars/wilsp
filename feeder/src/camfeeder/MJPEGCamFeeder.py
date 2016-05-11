@@ -77,6 +77,12 @@ class MJPEGCamFeeder(CamFeeder):
         if len(image) != content_length:
             raise FrameGrabbingException('Unexpected length of retrieved image')
 
+        # Now skip until the boundary is reached.
+        while True:
+            line = self._request_response.raw.readline().strip()
+            if b'boundary' in line:
+                break
+
         return (image,0)
 
     def _parse_headers(self) -> dict:
@@ -91,7 +97,11 @@ class MJPEGCamFeeder(CamFeeder):
             line = line.decode('utf-8')
             print("LINE: {}".format(line))
             if len(line) == 0:
-                break
+                if len(headers) != 0:  # We want to skip initial new-lines.
+                    break
+                else:
+                    continue
+
             key, val = line.split(':', 1)  # type: str, str
             headers[key.lower()] = val.strip()
         return headers

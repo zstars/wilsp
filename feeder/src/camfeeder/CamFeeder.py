@@ -40,6 +40,8 @@ class CamFeeder(object):
         of frames rendered so far in the cycle divided by the elapsed active time.
         :return:
         """
+        if self._active_since is None:
+            return 0
         elapsed = time.time() - self._active_since
         if elapsed == 0:
             return 0

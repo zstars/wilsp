@@ -1,4 +1,5 @@
 import io
+import traceback
 
 import gevent
 import grequests
@@ -22,6 +23,8 @@ class MJPEGCamFeeder(CamFeeder):
     Most IP cameras (such as most Logitech models) provide MJPEG streams at particular URLs.
     """
 
+    WAIT_ON_ERROR = 0.1  # Time to wait when an error occurs.
+
     def __init__(self, rdb: redis.StrictRedis, redis_prefix: str, cam_name: str, url: str, max_fps: int,
                  rotation: float = None):
         super(MJPEGCamFeeder, self).__init__(rdb, redis_prefix, cam_name, url, max_fps, rotation)
@@ -36,28 +39,30 @@ class MJPEGCamFeeder(CamFeeder):
         :return:
         """
 
-        self._start_streaming_request()
-
         while self._active:
 
-            update_start_time = time.time()
+            if self._request_response is None:
+                try:
+                    self._start_streaming_request()
+                except Exception as ex:
+                    traceback.print_exc(ex)
+                    continue
 
-            frame = self._grab_frame()
-            frame = self._rotated(frame, self._rotation)
-            self._put_frame(frame)
+            try:
+                frame, date = self._parse_next_image()
+                frame = self._rotated(frame, self._rotation)
+                self._put_frame(frame)
+            except Exception as ex:
+                print("Restarting connection")
+                traceback.print_exc(ex)
+                self._request_response = None
+                gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
 
             self._check_active()
 
-            elapsed = time.time() - update_start_time
-            intended_period = 1 / self._max_fps  # That's the approximate time a frame should take.
-
-            time_left = intended_period - elapsed
-            if time_left < 0:
-                # We are simply not managing to keep up with the intended frame rate, but for this
-                # cam feeder, that is not a (big) problem.
-                gevent.sleep(0)
-            else:
-                gevent.sleep(time_left)
+            # We cannot control the rate client-side (it is set by the remote webcam) so we have to read
+            # as fast as possible.
+            gevent.sleep(0)
 
     def _parse_next_image(self) -> (bytes, int):
         """
@@ -97,7 +102,7 @@ class MJPEGCamFeeder(CamFeeder):
         date = str.join(' ', date.split(' ')[:3])
         date = parse(date, fuzzy=True)
 
-        return (image, date)
+        return image, date
 
     def _parse_headers(self) -> dict:
         """
@@ -118,24 +123,24 @@ class MJPEGCamFeeder(CamFeeder):
             headers[key.lower()] = val.strip()
         return headers
 
-
     def _start_streaming_request(self) -> None:
         """
         Starts a streaming session. The endpoint should be a multipart/x-mixed-replace MJPEG stream.
         Because the FPS is set by the remote server, desync issues can arise. Those desync issues can
         set a very high capture-store latency, so we will have to detect and handle them by restarting
-        the stream.
+        the stream. It is also expected that it reports a boundary, which will be parsed.
 
-        Post-condition: Ready to start reading the self._request_response
+        Post-condition: Ready to start reading the self._request_response. The self._request_response is not set
+        unless the start was apparently successful.
         :return:
         """
         r = grequests.get(self._url, stream=True)
         ar = r.send()
-        self._request_response = ar.response  # type: requests.Response
-        if self._request_response.status_code != 200:
+        resp = ar.response  # type: requests.Response
+        if resp.status_code != 200:
             raise FrameGrabbingException('Unexpected response: not 200')
 
-        headers = self._request_response.headers
+        headers = resp.headers
         content_type = headers['content-type']
         if content_type is None:
             raise FrameGrabbingException('Content-type not provided')
@@ -149,3 +154,4 @@ class MJPEGCamFeeder(CamFeeder):
         boundary = boundary.split('=', 1)[1].strip()
 
         self._request_response_boundary = boundary
+        self._request_response = resp

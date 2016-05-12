@@ -65,6 +65,21 @@ class TestBasic(FeederTestBase):
         self.assertIsNotNone(self.cf._request_response_boundary)
         self.assertEquals('--video boundary--', self.cf._request_response_boundary)
 
+    def test_start_streaming_request_does_not_change_if_fails(self):
+        """
+        Ensures that the internal _request_response is only set if this succeeds.
+        :return:
+        """
+        self.assertIsNone(self.cf._request_response)
+        type(self.get_mock.return_value.send.return_value).response.headers['content-type'] = 'multipart/x-mixed-replace'
+
+        try:
+            self.cf._start_streaming_request()
+        except:
+            pass
+
+        self.assertIsNone(self.cf._request_response)
+
     def test_parse_headers(self):
         self.cf._start_streaming_request()
         headers = self.cf._parse_headers()
@@ -99,7 +114,6 @@ class TestBasic(FeederTestBase):
         img = Image.open(sio_in)
         self.assertIsNotNone(img)
 
-
         open('remove.jpg', 'wb').write(img_bytes)
 
     def tearDown(self):
@@ -121,12 +135,45 @@ class TestRun(FeederTestBase):
         self.rdb = mock_strict_redis_client()
         self.cf = MJPEGCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.mjpg', 10000, 0)
 
+        # We mock grequests.get calls.
+        self.get_patcher = patch('grequests.get')
+        self.get_mock = self.get_patcher.start()
+        self.addCleanup(self.get_patcher.stop)
+
+        fixed_response = requests.Response()
+        fixed_response.status_code = 200
+        fixed_response.headers['content-type'] = 'multipart/x-mixed-replace;boundary=--video boundary--'
+        fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
+        type(self.get_mock.return_value.send.return_value).response = PropertyMock(return_value=fixed_response)
+
         # Start running the greenlet.
         self.cf.start()
         self._g = self.cf._g
 
     def test_pass(self):
         pass
+
+    def test_does_not_run_inactive(self):
+        """
+        Ensure nothing runs when the cam is inactive.
+        :return:
+        """
+        self.assertEquals(0, self.cf.get_current_fps())
+        self.assertEquals(0, self.cf._frames_this_cycle)
+
+    def test_flow(self):
+        # Should activate
+        self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
+        gevent.sleep(0.2)
+
+        # Get current number of frames
+        frames = self.cf._frames_this_cycle
+
+        # Ensure that it's 116 (our whole example mjpeg).
+        self.assertEquals(116, frames)
+
+        # Ensure that the frames are being placed into redis.
+        self.assertIsNotNone(self.rdb.get('wilsat:cams:archimedes:lastframe'))
 
     def tearDown(self):
         gevent.kill(self._g)

@@ -13,7 +13,7 @@ from camfeeder.CamFeeder import CamFeeder
 
 
 class FrameGrabbingException(Exception):
-    def __init__(self, message, errors):
+    def __init__(self, message, errors=None):
         super(FrameGrabbingException, self).__init__(message)
         self.errors = errors
 

@@ -13,8 +13,9 @@ from camfeeder.CamFeeder import CamFeeder
 
 
 class FrameGrabbingException(Exception):
-    def __init__(self, msg, cause=None):
-        super().__init__(msg, cause)
+    def __init__(self, message, errors):
+        super(FrameGrabbingException, self).__init__(message)
+        self.errors = errors
 
 
 class MJPEGCamFeeder(CamFeeder):
@@ -53,8 +54,7 @@ class MJPEGCamFeeder(CamFeeder):
                 frame = self._rotated(frame, self._rotation)
                 self._put_frame(frame)
             except Exception as ex:
-                print("Restarting connection")
-                traceback.print_exc(ex)
+                print("Restarting connection. Cause: {}".format(ex))
                 self._request_response = None
                 gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
 
@@ -145,6 +145,7 @@ class MJPEGCamFeeder(CamFeeder):
         if content_type is None:
             raise FrameGrabbingException('Content-type not provided')
 
+        # TODO: If no x-mixed-replace and no boundary send a warning (unexpected respons: maybe not MJPEG)
         ctype, boundary = content_type.split(';', 1)
         ctype = ctype.strip()
 

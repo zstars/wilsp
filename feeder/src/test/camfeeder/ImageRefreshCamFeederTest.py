@@ -1,18 +1,12 @@
+import io
 import os
-import hashlib
 from unittest.mock import patch
 
 import gevent
-import grequests
-import io
-import redis
-import time
-
 import requests
 from mockredis import mock_strict_redis_client
-from test.FeederTestBase import FeederTestBase
-from camfeeder.CamFeeder import CamFeeder
 
+from test.FeederTestBase import FeederTestBase
 # Fix the working path
 from camfeeder.ImageRefreshCamFeeder import ImageRefreshCamFeeder, FrameGrabbingException
 
@@ -75,6 +69,29 @@ class TestBasic(FeederTestBase):
             pass
         else:
             self.fail('Expected a FrameGrabbingException')
+
+class TestBasicRegressions(FeederTestBase):
+
+    def setUp(self):
+        self.rdb = mock_strict_redis_client()
+        self.img = open('data/img.jpg', 'rb').read()
+        self.cf = ImageRefreshCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.jpg', 10,
+                                        0)
+
+    def tearDown(self):
+        pass
+
+    @patch('grequests.get')
+    @patch('grequests.map')
+    def test_invalid_fps_init_raises(self, map_patch, get_patch):
+        """ Ensures that trying to initialize with an invalid FPS raises an exception. """
+        try:
+            self.cf = ImageRefreshCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.jpg', 0,
+                                            0)
+        except:
+            pass
+        else:
+            self.fail("Exception was expected")
 
 
 class TestRun(FeederTestBase):

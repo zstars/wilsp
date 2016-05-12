@@ -6,6 +6,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'this is a secr3t'
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    REDIS_PREFIX = 'wilsa'
 
     @staticmethod
     def init_app(app):

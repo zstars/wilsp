@@ -3,3 +3,5 @@ cams:
     url: https://cams.weblab.deusto.es/webcam/proxied.py/arquimedes1_rotate
   archimedes2:
     url: https://cams.weblab.deusto.es/webcam/proxied.py/arquimedes2_rotate
+  archimedes3:
+    mjpeg_url: http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg

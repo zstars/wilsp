@@ -21,6 +21,9 @@ class ImageRefreshCamFeeder(CamFeeder):
                  rotation: float = None):
         super().__init__(rdb, redis_prefix, cam_name, url, max_fps, rotation)
 
+        if max_fps <= 0:
+            raise Exception('0 is not an acceptable max_fps')
+
     def _run_until_inactive(self):
         """
         Will just keep pushing images and checking the active status until

@@ -170,7 +170,8 @@ class TestRun(FeederTestBase):
         self.assertIsNotNone(self.rdb.get('wilsat:cams:archimedes:lastframe'))
 
     def tearDown(self):
-        gevent.kill(self._g)
+        for g in self._g:
+            gevent.kill(g)
 
 
 class TestRunRegressions(FeederTestBase):
@@ -209,4 +210,5 @@ class TestRunRegressions(FeederTestBase):
         gevent.sleep(0.4)
 
     def tearDown(self):
-        gevent.kill(self._g)
+        for g in self._g:
+            gevent.kill(g)

@@ -7,6 +7,8 @@ import time
 from mockredis import mock_strict_redis_client
 from camfeeder.CamFeeder import CamFeeder
 
+from unittest.mock import patch
+
 # Fix the working path
 from test.FeederTestBase import FeederTestBase
 
@@ -106,6 +108,7 @@ class ConcreteCamFeeder(CamFeeder):
         self._times_active += 1
         while self._active:
             self._check_active()
+            self._frames_this_cycle += 1
             gevent.sleep(0.01)
 
     def _wait_until_active(self):
@@ -154,5 +157,27 @@ class TestRun(FeederTestBase):
         self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
         gevent.sleep(0.1)
 
+    @patch.object(ConcreteCamFeeder, 'STATS_PUSH_WAIT', 0.1)
+    def test_stats_pusher(self):
+
+        CamFeeder.STATS_PUSH_WAIT = 0.01
+
+        # Should activate
+        self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
+        gevent.sleep(0.3)
+
+        cycle_frames = self.rdb.get('wilsat:cams:archimedes:stats:cycle_frames')
+        cycle_elapsed = self.rdb.get('wilsat:cams:archimedes:stats:cycle_elapsed')
+
+        self.assertIsNotNone(cycle_frames)
+        self.assertIsNotNone(cycle_elapsed)
+
+        cycle_frames = int(cycle_frames)
+        cycle_elapsed = float(cycle_elapsed)
+
+        self.assertGreater(cycle_frames, 10)
+        self.assertGreater(cycle_elapsed, 0.1)
+
     def tearDown(self):
-        gevent.kill(self._g)
+        for g in self._g:
+            gevent.kill(g)

@@ -14,6 +14,7 @@ class CamFeeder(object):
     """
 
     IMAGE_EXPIRE_TIME = 10
+    STATS_PUSH_WAIT = 1
     SLEEP_WHEN_INACTIVE = 0.01
 
     ########################################################
@@ -22,7 +23,7 @@ class CamFeeder(object):
 
     def __init__(self, rdb: redis.StrictRedis, redis_prefix: str, cam_name: str, url: str, max_fps: int,
                  rotation: float = None):
-        self._g = None  # type: gevent.Greenlet
+        self._g = []  # type: [gevent.Greenlet]
         self._rdb = rdb  # type: redis.StrictRedis
         self._redis_prefix = redis_prefix
         self._url = url
@@ -52,12 +53,40 @@ class CamFeeder(object):
         Starts running the greenlet.
         :return:
         """
-        self._g = gevent.Greenlet(self._run)
-        self._g.start()
+        g = gevent.Greenlet(self._run)
+        g.start()
+        self._g.append(g)
+
+        # Start the stats pusher as well.
+        g = gevent.Greenlet(self._run_stats_greenlet)
+        g.start()
+        self._g.append(g)
 
     ########################################################
     # PRIVATE API
     ########################################################
+
+    def _run_stats_greenlet(self) -> None:
+        """
+        Calls every so often the '_push_stats' method.
+        :return:
+        """
+        while True:
+            self._push_stats()
+            gevent.sleep(CamFeeder.STATS_PUSH_WAIT)
+
+    def _push_stats(self) -> None:
+        """
+        Push stats to the REDIS server.
+        :return:
+        """
+        base_key = "{}:cams:{}:stats:".format(self._redis_prefix, self._cam_name)
+
+        self._rdb.setex(base_key + 'cycle_frames', CamFeeder.IMAGE_EXPIRE_TIME * 3, self._frames_this_cycle)
+
+        if self._active_since is not None:
+            self._rdb.setex(base_key + 'cycle_elapsed', CamFeeder.IMAGE_EXPIRE_TIME * 3, time.time() - self._active_since)
+
 
     @abstractmethod
     def _run_until_inactive(self) -> None:  # pragma: no cover

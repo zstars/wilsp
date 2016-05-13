@@ -147,4 +147,5 @@ class TestRun(FeederTestBase):
         self.assertEquals(self.rdb.get('wilsat:cams:archimedes:lastframe'), b'1234567890'*12)
 
     def tearDown(self):
-        gevent.kill(self._g)
+        for g in self._g:
+            gevent.kill(g)

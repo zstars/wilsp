@@ -42,6 +42,8 @@ class MJPEGCamFeeder(CamFeeder):
         self._request_response = None  # type: requests.Response
         self._request_response_boundary = None  # type: str
 
+        self._stats_live_control_restablish = 0
+
     def _run_until_inactive(self):
         """
         Will just keep pushing images and checking the active status until
@@ -59,7 +61,10 @@ class MJPEGCamFeeder(CamFeeder):
 
             self._check_active()
 
-            if self._request_response is None or (self.LIVE_DELAY_CONTROL and self._is_too_delayed()):
+            # Re-establish the connection because we are out of sync?
+            live_control_restablish = self.LIVE_DELAY_CONTROL and self._is_too_delayed()
+
+            if self._request_response is None or live_control_restablish:
                 try:
                     self._start_streaming_request()
                 except Exception as ex:
@@ -71,10 +76,13 @@ class MJPEGCamFeeder(CamFeeder):
                 # frame.
                 need_to_sync = True
 
+                # If we just re-established due to a live-control trigger, we register it.
+                if live_control_restablish:
+                    self._stats_live_control_restablish += 1
+
             try:
                 frame, date = self._parse_next_image()
                 if need_to_sync:
-                    need_to_sync = False
                     self._server_sync_time = date
                     self._local_sync_time = time.time()
                 self._server_frame_time = date

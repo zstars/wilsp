@@ -1,21 +1,15 @@
+import io
 import os
-import hashlib
 from unittest.mock import patch, MagicMock, PropertyMock
 
 import gevent
 import grequests
-import io
-import redis
-import time
-
 import requests
 from PIL import Image
 from mockredis import mock_strict_redis_client
-from test.FeederTestBase import FeederTestBase
-from camfeeder.CamFeeder import CamFeeder
 
+from test.FeederTestBase import FeederTestBase
 # Fix the working path
-from camfeeder.ImageRefreshCamFeeder import FrameGrabbingException
 from camfeeder.MJPEGCamFeeder import MJPEGCamFeeder
 
 abspath = os.path.abspath(__file__)
@@ -174,6 +168,45 @@ class TestRun(FeederTestBase):
 
         # Ensure that the frames are being placed into redis.
         self.assertIsNotNone(self.rdb.get('wilsat:cams:archimedes:lastframe'))
+
+    def tearDown(self):
+        gevent.kill(self._g)
+
+
+class TestRunRegressions(FeederTestBase):
+    """
+    Test that previous bugs (when running gevent loop) do not re-appear.
+    """
+
+    def setUp(self):
+        self.rdb = mock_strict_redis_client()
+        self.cf = MJPEGCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.mjpg', 10000, 0)
+
+        # We mock grequests.get calls.
+        self.get_patcher = patch('grequests.get')
+        self.get_mock = self.get_patcher.start()
+        self.addCleanup(self.get_patcher.stop)
+
+        fixed_response = requests.Response()
+        fixed_response.status_code = 200
+        fixed_response.headers['content-type'] = 'multipart/x-mixed-replace;boundary=--video boundary--'
+        fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
+        type(self.get_mock.return_value.send.return_value).response = PropertyMock(return_value=fixed_response)
+
+        # Start running the greenlet.
+        self.cf.start()
+        self._g = self.cf._g
+
+    def test_pass(self):
+        pass
+
+    def test_not_hung_with_length_err(self):
+        # Patch the _parse_next_image method so that it raises an exception
+        self.cf._parse_next_image = MagicMock("name='_parse_next_image'")
+
+        # Should activate
+        self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
+        gevent.sleep(0.4)
 
     def tearDown(self):
         gevent.kill(self._g)

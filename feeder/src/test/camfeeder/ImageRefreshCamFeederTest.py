@@ -93,7 +93,6 @@ class TestBasicRegressions(FeederTestBase):
         else:
             self.fail("Exception was expected")
 
-
 class TestRun(FeederTestBase):
     """
     Tests by letting the gevent greenlets run.

@@ -42,11 +42,18 @@ class MJPEGCamFeeder(CamFeeder):
 
         while self._active:
 
+            # We cannot control the rate client-side (it is set by the remote webcam) so we have to read
+            # as fast as possible.
+            gevent.sleep(0)
+
+            self._check_active()
+
             if self._request_response is None:
                 try:
                     self._start_streaming_request()
                 except Exception as ex:
-                    traceback.print_exc(ex)
+                    print("Failed to start_streaming request. Cause: {}".format(ex))
+                    gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                     continue
 
             try:
@@ -57,12 +64,7 @@ class MJPEGCamFeeder(CamFeeder):
                 print("Restarting connection. Cause: {}".format(ex))
                 self._request_response = None
                 gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
-
-            self._check_active()
-
-            # We cannot control the rate client-side (it is set by the remote webcam) so we have to read
-            # as fast as possible.
-            gevent.sleep(0)
+                continue
 
     def _parse_next_image(self) -> (bytes, int):
         """
@@ -70,6 +72,7 @@ class MJPEGCamFeeder(CamFeeder):
         :return: Tuple containing the bytes for the file, and the time reported by the server.
         """
         headers = self._parse_headers()
+
         content_type = headers.get('content-type')
         if content_type is None:
             raise FrameGrabbingException('Unexpected response: Content type not present')
@@ -82,11 +85,16 @@ class MJPEGCamFeeder(CamFeeder):
 
         image = self._request_response.raw.read(content_length)
         if len(image) != content_length:
-            raise FrameGrabbingException('Unexpected length of retrieved image')
+            raise FrameGrabbingException(
+                'Unexpected length of retrieved image. Expected {} got {}.'.format(content_length, len(image)))
 
         # Now skip until the boundary is reached.
         while True:
-            line = self._request_response.raw.readline().strip()
+            rawline = self._request_response.raw.readline()
+            if len(rawline) == 0:
+                # EOF
+                raise FrameGrabbingException('No more data received')
+            line = rawline.strip()
             line = line.decode('utf-8')
             if len(line) > 0:
                 if line == self._request_response_boundary:
@@ -111,7 +119,10 @@ class MJPEGCamFeeder(CamFeeder):
         """
         headers = {}
         while True:
-            line = self._request_response.raw.readline().strip()
+            line = self._request_response.raw.readline()
+            if len(line) == 0:
+                raise FrameGrabbingException('EOF reached before being able to read headers')
+            line = line.strip()
             line = line.decode('utf-8')
             if len(line) == 0:
                 if len(headers) != 0:  # We want to skip initial new-lines.

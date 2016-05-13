@@ -20,3 +20,6 @@ itsdangerous==0.24
 redis==2.10.5
 requests==2.10.0
 visitor==0.1.2
+mockredispy
+python-dateutil
+Flask-SocketIO

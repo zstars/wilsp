@@ -44,6 +44,19 @@ class MJPEGCamFeeder(CamFeeder):
 
         self._stats_live_control_restablish = 0
 
+    # Override
+    def _push_stats(self):
+        """
+        Pushes statistics to redis. Is automatically called every once in a while.
+        :return:
+        """
+        super()._push_stats()
+
+        base_key = "{}:cams:{}:stats:".format(self._redis_prefix, self._cam_name)
+
+        self._rdb.setex(base_key + 'cycle_live_control_restablish', CamFeeder.IMAGE_EXPIRE_TIME * 3, self._stats_live_control_restablish)
+
+
     def _run_until_inactive(self):
         """
         Will just keep pushing images and checking the active status until

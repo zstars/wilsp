@@ -1,12 +1,8 @@
-import io
-import traceback
-
 import gevent
 import grequests
 import redis
-import time
 import requests
-
+import time
 from dateutil.parser import parse
 
 from camfeeder.CamFeeder import CamFeeder
@@ -24,11 +20,24 @@ class MJPEGCamFeeder(CamFeeder):
     Most IP cameras (such as most Logitech models) provide MJPEG streams at particular URLs.
     """
 
+    # If set to True an attempt will be made to re-establish the connection to re-sync when there is a too-long difference
+    # between the capture time reported by the remote webcam and the receive-time. This can cause due to limited bandwidth.
+    LIVE_DELAY_CONTROL = True
+    # Maximum number of seconds of delay before a connection re-establish takes place. Because the webcam.
+    # With a 1-second granularity webcams, being lower than 2 could easily trigger unnecessary resyncs.
+    LIVE_DELAY_MAX = 2
+
     WAIT_ON_ERROR = 0.1  # Time to wait when an error occurs.
 
     def __init__(self, rdb: redis.StrictRedis, redis_prefix: str, cam_name: str, url: str, max_fps: int,
                  rotation: float = None):
         super(MJPEGCamFeeder, self).__init__(rdb, redis_prefix, cam_name, url, max_fps, rotation)
+
+        # For live-delay control. Keeps track of webcam-side time so that we can know how much delay there currently is.
+        self._server_sync_time = None  # webcam server-side time
+        self._local_sync_time = None  # local time
+        self._server_frame_time = None  # last frame time (webcam server-side)
+        self._local_frame_time = None  # local frame time (local side)
 
         self._request_response = None  # type: requests.Response
         self._request_response_boundary = None  # type: str
@@ -42,13 +51,15 @@ class MJPEGCamFeeder(CamFeeder):
 
         while self._active:
 
+            need_to_sync = False
+
             # We cannot control the rate client-side (it is set by the remote webcam) so we have to read
             # as fast as possible.
             gevent.sleep(0)
 
             self._check_active()
 
-            if self._request_response is None:
+            if self._request_response is None or (self.LIVE_DELAY_CONTROL and self._is_too_delayed()):
                 try:
                     self._start_streaming_request()
                 except Exception as ex:
@@ -56,8 +67,18 @@ class MJPEGCamFeeder(CamFeeder):
                     gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                     continue
 
+                # Keep track that we have just established a new connection, so that we store the date in the next
+                # frame.
+                need_to_sync = True
+
             try:
                 frame, date = self._parse_next_image()
+                if need_to_sync:
+                    need_to_sync = False
+                    self._server_sync_time = date
+                    self._local_sync_time = time.time()
+                self._server_frame_time = date
+                self._local_frame_time = time.time()
                 frame = self._rotated(frame, self._rotation)
                 self._put_frame(frame)
             except Exception as ex:
@@ -167,3 +188,17 @@ class MJPEGCamFeeder(CamFeeder):
 
         self._request_response_boundary = boundary
         self._request_response = resp
+
+    def _is_too_delayed(self) -> bool:
+        """
+        Checks if the server is providing the images in slower than real time by comparing the webcam-side time elapsed
+        since last frame to the local-side.
+        :return:
+        """
+        try:
+            elapsed_server_side = (self._server_frame_time - self._server_sync_time).seconds
+            elapsed_client_side = self._local_frame_time - self._local_sync_time
+        except TypeError:
+            return False
+
+        return elapsed_client_side - elapsed_server_side > MJPEGCamFeeder.LIVE_DELAY_MAX

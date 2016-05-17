@@ -9,7 +9,7 @@ def index():
     return render_template('base.html')
 
 
-@main.route('/inputs/<cam>', methods=['POST', 'GET'])
+@main.route('/inputs/<cam>/', methods=['POST', 'GET'])
 def inputs(cam):
     """
     Forwards the raw data to the appropriate redis channel.

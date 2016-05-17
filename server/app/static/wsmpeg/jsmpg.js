@@ -51,8 +51,6 @@ var jsmpeg = window.jsmpeg = function( url, opts ) {
 		this.renderFrame = this.renderFrame2D;
 	}
 
-	debugger;
-
 	if( url instanceof WebSocket ) {
 		this.client = url;
 		this.client.onopen = this.initSocketClient.bind(this);
@@ -74,7 +72,11 @@ var jsmpeg = window.jsmpeg = function( url, opts ) {
 jsmpeg.prototype.waitForIntraFrame = true;
 jsmpeg.prototype.socketBufferSize = 512 * 1024; // 512kb each
 
-jsmpeg.prototype.initSocketClient = function(useSocketIO) {
+jsmpeg.prototype.initSocketClient = function(ev, useSocketIO) {
+
+	if(useSocketIO === undefined)
+		useSocketIO = false;
+
 	this.useSocketIO = useSocketIO;
 
 	this.buffer = new BitReader(new ArrayBuffer(this.socketBufferSize));
@@ -111,7 +113,7 @@ jsmpeg.prototype.decodeSocketHeader = function( data ) {
 };
 
 jsmpeg.prototype.receiveSocketMessage = function( event ) {
-
+	
 	if(this.useSocketIO) {
 		var messageData = new Uint8Array(event);
 	} else {

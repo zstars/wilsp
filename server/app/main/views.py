@@ -25,6 +25,10 @@ def test_socketio():
 def test_streaming():
     return render_template('wsmjpeg/stream-example.html')
 
+@main.route('/test/mpeg_streaming')
+def test_mpeg_streaming():
+    return render_template('wsmpeg/stream-example.html')
+
 count = 0
 
 def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):

@@ -113,7 +113,7 @@ jsmpeg.prototype.decodeSocketHeader = function( data ) {
 };
 
 jsmpeg.prototype.receiveSocketMessage = function( event ) {
-	
+
 	if(this.useSocketIO) {
 		var messageData = new Uint8Array(event);
 	} else {

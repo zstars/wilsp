@@ -14,6 +14,8 @@ class SocketIOMPEGRedisBroadcaster(object):
     """
     The MPEG Redis broadcaster will listen to a MPEG stream that is published through
     a particular Redis channel and forward the stream to the client through the Socket IO library.
+
+    TODO: Exit the threadlet when inactive, or whatever.
     """
 
     def __init__(self, cam_name):

@@ -6,7 +6,7 @@ import config
 
 class MPEGFeeder(object):
     """
-    The MPEG feeder will control a ffmpeg instance and rely on the 'forward' server to publish
+    The MPEG feeder will control a ffmpeg instance, direct it through stdout pipe, and push it to redis.
     the stream in REDIS.
     """
 
@@ -20,20 +20,19 @@ class MPEGFeeder(object):
         # Run ffmpeg to forward from the camera to the forwarder.
 
         # For debugging only.
-        # sself._forward_url = "output_test.mpeg"
-        self._mjpeg_source = "output_test.mpeg"
+        self._forward_url = "pipe:1"
+        self._mjpeg_source = "http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg"
 
-        ffmpeg_command = ['/opt/local/bin/ffmpeg', '-r', '30', '-i', self._mjpeg_source, '-f', 'mpeg1video', '-b', '800k', '-r', '15', self._forward_url]
+        ffmpeg_command = ['/opt/local/bin/ffmpeg', '-r', '30', '-i', self._mjpeg_source, '-f', 'mpeg1video', '-b', '800k', '-r', '30', self._forward_url]
 
         print("Running FFMPEG command: {}".format(ffmpeg_command))
 
         p = subprocess.Popen(ffmpeg_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
+        f = open("test_fs.mjpeg", "wb")
         while True:
-            retval = p.poll()
-            if retval is None:
-                break
-            out, _ = p.communicate(None, 1)
+            packet = p.stdout.readline()
+            f.write(packet)
 
         print("MPEG greenlet is OUT")
 

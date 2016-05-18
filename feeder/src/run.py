@@ -6,10 +6,10 @@ import gevent
 import redis
 import yaml
 
-
 # Pre-set the working directory.
 from camfeeder.ImageRefreshCamFeeder import ImageRefreshCamFeeder
 from camfeeder.MJPEGCamFeeder import MJPEGCamFeeder
+from camfeeder.MPEGFeeder import MPEGFeeder
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -64,8 +64,9 @@ def run():
         else:
             rotation = 0.0
 
-        url = cam.get('url')
+        url = cam.get('img_url')
         mjpeg_url = cam.get('mjpeg_url')
+        mpeg = cam.get('mpeg')
 
         if mjpeg_url is not None:
             cf = MJPEGCamFeeder(rdb, REDIS_PREFIX, cam_name, mjpeg_url, 30, rotation)
@@ -75,6 +76,11 @@ def run():
         if mjpeg_url is None and url is None:
             raise Exception("url or mjpeg_url not specified for camera {}".format(cam_name))
 
+        if mpeg is not None and mpeg is True:
+            mpeg_cf = MPEGFeeder(mjpeg_url)
+            cam_feeders[cam_name + '/mpeg'] = mpeg_cf
+            mpeg_cf.start()
+
         cam_feeders[cam_name] = cf
         cf.start()
 
@@ -83,7 +89,12 @@ def run():
     greenlets.append(g)
 
     # Wait for all the greenlets
-    greenlets.extend([cam._g for cam in cam_feeders.values()])
+    cam_feeder_greenlets_lists = [cam._g for cam in cam_feeders.values()]
+
+    for cam_feeder_greenlets in cam_feeder_greenlets_lists:
+        greenlets.extend(cam_feeder_greenlets)
+
+    pass
 
 
 if __name__ == '__main__':

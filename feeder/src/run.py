@@ -77,7 +77,7 @@ def run():
             raise Exception("url or mjpeg_url not specified for camera {}".format(cam_name))
 
         if mpeg is not None and mpeg is True:
-            mpeg_cf = MPEGFeeder(cam_name, mjpeg_url)
+            mpeg_cf = MPEGFeeder(rdb, cam_name, mjpeg_url)
             cam_feeders[cam_name + '/mpeg'] = mpeg_cf
             mpeg_cf.start()
 

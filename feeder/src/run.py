@@ -77,7 +77,7 @@ def run():
             raise Exception("url or mjpeg_url not specified for camera {}".format(cam_name))
 
         if mpeg is not None and mpeg is True:
-            mpeg_cf = MPEGFeeder(mjpeg_url)
+            mpeg_cf = MPEGFeeder(cam_name, mjpeg_url)
             cam_feeders[cam_name + '/mpeg'] = mpeg_cf
             mpeg_cf.start()
 
@@ -93,8 +93,6 @@ def run():
 
     for cam_feeder_greenlets in cam_feeder_greenlets_lists:
         greenlets.extend(cam_feeder_greenlets)
-
-    pass
 
 
 if __name__ == '__main__':

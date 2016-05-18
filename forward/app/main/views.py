@@ -19,6 +19,8 @@ def inputs(cam):
     """
     data = request.data
 
+    print("[DBG]: Publishing data to: {}".format(cam))
+
     # Publish the data in redis as an event.
     rdb.publish('{}/mpeg', data)
 

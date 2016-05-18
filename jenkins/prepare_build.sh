@@ -7,7 +7,7 @@ if [ -d $PYENV_HOME ; then
 fi
 
 # Create virtualenv and install necessary packages
-virtualenv --no-site-packages $PYENV_HOME
+virtualenv --python /usr/bin/python3 --no-site-packages $PYENV_HOME
 . $PYENV_HOME/bin/activate
 
 pip install --quiet nosexcover

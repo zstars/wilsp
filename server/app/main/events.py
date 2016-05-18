@@ -4,6 +4,7 @@ from flask.ext.socketio import emit
 from app.main.SocketIOMJPEGBroadcaster import SocketIOMJPEGBroadcaster
 from app.main.SocketIOMPEGBroadcaster import SocketIOMPEGBroadcaster
 from app.main.SocketIOMPEGRedisBroadcaster import SocketIOMPEGRedisBroadcaster
+from app.main.redis_funcs import mark_active
 from .. import socketio
 
 @socketio.on('connected', namespace='/chat')
@@ -37,7 +38,6 @@ def connected_mjpeg_stream(data):
     t = SocketIOMJPEGBroadcaster()
     gevent.spawn(t.run)
 
-
 @socketio.on('connected', namespace='/mpeg_stream')
 def mpeg_stream_connected(data):
     print('Connected to MPEG stream')
@@ -47,6 +47,11 @@ def mpeg_stream_connected(data):
 def mpeg_stream_start(data):
     print('Starting MPEG stream')
 
+    cam = data['cam']
+
+    # Mark in Redis the stream as alive.
+    mark_active(cam, 'mpeg')
+
     # Start the broadcaster
-    t = SocketIOMPEGRedisBroadcaster(data['cam'])
+    t = SocketIOMPEGRedisBroadcaster(cam)
     gevent.spawn(t.run)

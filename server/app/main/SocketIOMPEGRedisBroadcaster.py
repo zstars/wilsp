@@ -8,8 +8,6 @@ from gevent import monkey
 # So that redis pubsub listen can be done asynchronously.
 monkey.patch_all()
 
-
-
 class SocketIOMPEGRedisBroadcaster(object):
     """
     The MPEG Redis broadcaster will listen to a MPEG stream that is published through

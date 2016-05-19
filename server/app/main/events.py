@@ -1,4 +1,5 @@
 import gevent
+from flask import request
 from flask.ext.socketio import emit
 
 from app.main.SocketIOMJPEGBroadcaster import SocketIOMJPEGBroadcaster
@@ -38,12 +39,16 @@ def connected_mjpeg_stream(data):
     t = SocketIOMJPEGBroadcaster()
     gevent.spawn(t.run)
 
-@socketio.on('connected', namespace='/mpeg_stream')
+@socketio.on('connected', namespace='/mpeg')
 def mpeg_stream_connected(data):
-    print('Connected to MPEG stream')
-    emit('status', {'msg': 'connected indeed'})
+    """
+    TODO: This event is probably not needed because a start is sent anyway.
+    :param data:
+    :return:
+    """
+    print('Connected event received')
 
-@socketio.on('start', namespace='/mpeg_stream')
+@socketio.on('start', namespace='/mpeg')
 def mpeg_stream_start(data):
     print('Starting MPEG stream')
 
@@ -52,6 +57,12 @@ def mpeg_stream_start(data):
     # Mark in Redis the stream as alive.
     mark_active(cam, 'mpeg')
 
+    # Supposedly request.sid contains the unique identifier of the client that sent the events, which is also the
+    # channel name that should enable us to send messages specifically to that client.
+    client_sid = request.sid
+
     # Start the broadcaster
-    t = SocketIOMPEGRedisBroadcaster(cam)
+    # Though there might be some more efficient way through broadcasting, for now we create a broadcaster greenlet
+    # for every client, and we pass it the client_sid so that it can send data to a specific client.
+    t = SocketIOMPEGRedisBroadcaster(cam, client_sid)
     gevent.spawn(t.run)

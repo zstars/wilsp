@@ -103,6 +103,9 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
+@main.route('/cams/<cam_id>/mpeg')
+def test_mpeg(cam_id):
+    return render_template('wsmpeg/mpeg.html')
 
 @main.route('/cams/<cam_id>/mjpeg')
 def cam_mjpeg(cam_id):

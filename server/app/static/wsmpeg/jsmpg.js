@@ -89,9 +89,7 @@
             this.client.binaryType = 'arraybuffer';
             this.client.onmessage = this.receiveSocketMessage.bind(this);
         } else {
-            console.log('Set socketio stream callback');
             this.client.on('stream', function (bytes) {
-                console.log('Received stream message');
                 this.receiveSocketMessage(bytes);
             }.bind(this));
         }

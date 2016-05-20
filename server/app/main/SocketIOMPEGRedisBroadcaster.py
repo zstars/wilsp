@@ -54,8 +54,8 @@ class SocketIOMPEGRedisBroadcaster(object):
         b.write(b'jsmp')
 
         # Send w and h
-        b.write(struct.pack('!H', 320))
-        b.write(struct.pack('!H', 240))
+        b.write(struct.pack('!H', 640))
+        b.write(struct.pack('!H', 480))
 
         print('Emitted to "stream" on namespace {}'.format(SocketIOMPEGRedisBroadcaster.SOCKETIO_NAMESPACE))
 

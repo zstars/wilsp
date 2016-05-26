@@ -13,6 +13,10 @@ from . import main
 def index():
     return render_template('base.html')
 
+@main.route('/exps/imgrefresh/<cam>')
+def exp_imgrefresh(cam):
+    return render_template('exps/camera_imgrefresh.html')
+
 @main.route('/test')
 def test():
     return render_template('dash.html')

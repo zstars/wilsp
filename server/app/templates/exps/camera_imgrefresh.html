@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Refresh View</title>
+
+    <script src="https://code.jquery.com/jquery-2.2.3.min.js"
+        integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<h3>Image Refresh View</h3>
+<img id="theimg" src="//localhost:5000/cams/archimedes1"/>
+
+<table>
+    <tr>
+        <td>FPS</td>
+        <td id="fpsnum">0</td>
+    </tr>
+    <tr>
+        <td>Failed frames</td>
+        <td id="ffnum">0</td>
+    </tr>
+</table>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        var cam = new Camera($("#theimg")[0], 5);
+        cam.start();
+
+        setInterval(function(){
+            var fps = cam.getAverageFPS();
+            var failed = cam.getFailedFrames();
+
+            $("#fpsnum").text(fps);
+            $('#ffnum').text(fps);
+        }, 1000);
+    });
+</script>
+
+<script src="{{ url_for('static', filename='widgets/camera.imgrefresh.widget.js')}}"></script>
+
+</body>
+</html>

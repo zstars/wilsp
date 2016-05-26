@@ -1,40 +1,32 @@
 /// <reference path="jquery.d.ts" />
 
-class Camera
+class MJPEGNativeCamera
 {
-    private mImageElement : HTMLImageElement;
-    private mTargetFPS : number;
-    private mImageURL : string;
-    private mTargetTimePerFrame : number;
+    private mDivElement : HTMLDivElement;
+    private mMJPEGURL : string;
+
+    private mRunning : boolean;
 
     private mTimeStarted : number;
-    private mFramesRendered : number;
-    private mFailedFrames : number;
-    private mLastFrameTimeStart : number; // TS of the last frame start (src change time).
+    private mFailures : number; // To track the number of times we have to restart the stream somehow.
     private mStoppedTime : number; // Time the refresher was stopped, to calc FPS when not active.
 
-    private mRefreshTimeout : number; // Identifier for the currently active refresh timeout.
+    private mImageElement : HTMLImageElement;
+
 
     /**
-     * Creates a Camera object, that will refresh the specified image element
-     * by modifying the src attribute.
-     * @param imageElement
-     * @param targetFPS
-     * @param imageURL: URL to the image. If undefined, it will be retrieved from the src attribute.
+     * Creates a Camera object, that will rely on the native browser's method for rendering MJPEG.
+     * Native MJPEG gives us no control over the FPS: it is configured server-side.
+     * @param divElement: DIV element within which the camera element will be created.
+     * @param MJPEGURL: URL to the MJPEG URL. If undefined, it will be retrieved from the src attribute.
      */
-    public constructor(imageElement: HTMLImageElement, targetFPS: number, imageURL: string = undefined)
+    public constructor(divElement: HTMLDivElement, MJPEGURL: string)
     {
-        this.mImageElement = imageElement;
+        this.mDivElement = divElement;
+        this.mMJPEGURL = MJPEGURL;
 
-        this.setTargetFPS(targetFPS);
-
-        if(imageURL !== undefined)
-            this.mImageURL = imageURL;
-        else
-            this.mImageURL = this.mImageElement.src;
-
-        if(this.mImageElement === undefined)
-            throw new Error('A proper image URL was not provided, and one could not be obtained from the src attribute');
+        if(this.mDivElement === undefined)
+            throw new Error('A proper MJPEG URL was not provided');
     } // !ctor
 
     /**
@@ -42,7 +34,7 @@ class Camera
      */
     public isRunning() : boolean
     {
-        return this.mRefreshTimeout !== undefined;
+        return this.mRunning;
     } // !isRunning
 
     /**
@@ -51,15 +43,18 @@ class Camera
     public start()
     {
         this.mTimeStarted = Date.now();
-        this.mFramesRendered = 0;
-        this.mFailedFrames = 0;
-        this.mLastFrameTimeStart = 0;
+        this.mFailures = 0;
+        this.mRunning = true;
+
+        this.mImageElement = document.createElement('img');
 
         // Set the event handlers for the 'load' and 'error' event.
-        jQuery(this.mImageElement).on('load', this.onImageLoad.bind(this));
-        jQuery(this.mImageElement).on('error', this.onImageError.bind(this));
+        jQuery(this.mDivElement).on('load', this.onImageLoad.bind(this));
+        jQuery(this.mDivElement).on('error', this.onImageError.bind(this));
 
-        this.refresh();
+        // Create the nested element.
+        this.mImageElement.src = this.mMJPEGURL;
+        this.mDivElement.appendChild(this.mImageElement);
     } // !start
 
     /**
@@ -67,97 +62,37 @@ class Camera
      */
     public stop()
     {
-        clearTimeout(this.mRefreshTimeout);
+        // Just remove the element so that it stops.
+        // TODO: Some browsers are reportedly bugged. Check.
+        this.mImageElement.remove();
+
         this.mStoppedTime = Date.now();
     } // !stop
 
     /**
-     * Retrieves the FPS that has been achieved in the current start-refresh period.
-     * If the refresher is not running, then the last period's average FPS is returned.
-     * If no time has elapsed, 0 is returned.
-     */
-    public getAverageFPS(): number
-    {
-        let finalTime : number;
-        if(this.isRunning())
-            finalTime = Date.now();
-        else
-            finalTime = this.mStoppedTime;
-
-        let elapsed : number = finalTime - this.mTimeStarted;
-        if(elapsed === 0)
-        {
-            return 0;
-        }
-
-        let fps : number = this.mFramesRendered / (elapsed/1000);
-        return fps;
-    } // !getAverageFPS
-
-    /**
-     * Retrieves the number of failed frames in the last active period.
+     * Retrieves the number of failures in the last active period.
      * @returns {number}
      */
-    public getFailedFrames(): number
+    public getFailures(): number
     {
-        return this.mFailedFrames;
+        return this.mFailures;
     }
-
-    /**
-     * Retrieves the number of successful frames in the last active period.
-     */
-    public getSuccessfulFrames(): number
-    {
-        return this.mFramesRendered;
-    }
-
-    /**
-     * Changes the target FPS.
-     * @param fps
-     */
-    public setTargetFPS(fps: number): void
-    {
-        this.mTimeStarted = Date.now();
-        this.mTargetFPS = fps;
-        this.mFramesRendered = 0;
-        this.mFailedFrames = 0;
-        this.mTargetTimePerFrame = 1 / this.mTargetFPS;
-    } // !setTargetFPS
 
     private onImageLoad()
     {
-        let elapsedMs: number = Date.now() - this.mLastFrameTimeStart;
-        this.mFramesRendered += 1;
-
-        let sleep: number = this.mTargetTimePerFrame - elapsedMs / 1000;
-        if(sleep < 0)
-            sleep = 0;
-
-        this.mRefreshTimeout = setTimeout(this.refresh.bind(this), sleep * 1000);
     } // !onImageLoad
 
     private onImageError()
     {
-        let elapsedMs: number = Date.now() - this.mLastFrameTimeStart;
-        this.mFailedFrames += 1;
+        console.error('Error while loading MJPEG image. Restarting stream in 500 ms.');
 
-        let sleep: number = this.mTargetTimePerFrame - elapsedMs / 1000;
-        if(sleep < 0)
-            sleep = 0;
+        let that = this;
 
-        this.mRefreshTimeout = setTimeout(this.refresh.bind(this), sleep * 1000);
+        setTimeout(function() {
+            that.stop();
+            that.start();
+        }, 500);
     } // !onImageError
-
-    /**
-     * Refreshes the src attribute of the image. Calls itself with a certain frequency that
-     * depends on the targetFPS.
-     */
-    private refresh()
-    {
-        // Change the image.
-        this.mLastFrameTimeStart = Date.now();
-        this.mImageElement.src = Camera.getTimestampedURL(this.mImageURL);
-    } // !refresh
 
     /**
      * Retrieves the provided URL but with an added __ts parameter.

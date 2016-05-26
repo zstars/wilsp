@@ -156,7 +156,7 @@ class ImageRefreshCamera
     {
         // Change the image.
         this.mLastFrameTimeStart = Date.now();
-        this.mImageElement.src = Camera.getTimestampedURL(this.mImageURL);
+        this.mImageElement.src = ImageRefreshCamera.getTimestampedURL(this.mImageURL);
     } // !refresh
 
     /**

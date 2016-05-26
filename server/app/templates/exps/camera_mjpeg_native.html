@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Image Refresh View</title>
+    <title>Image MJPEG Native View</title>
 
     <script src="https://code.jquery.com/jquery-2.2.3.min.js"
         integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
 </head>
 <body>
 
-<h3>Image Refresh View</h3>
-<img id="theimg" src="//localhost:5000/cams/archimedes1"/>
+<h3>MJPEG Native View</h3>
+<div id="theimgdiv"></div>
 
 <table>
     <tr>
@@ -18,21 +18,20 @@
         <td id="fpsnum">0</td>
     </tr>
     <tr>
-        <td>Failed frames</td>
+        <td>Failures</td>
         <td id="ffnum">0</td>
     </tr>
 </table>
 
 <script type="text/javascript">
     $(document).ready(function(){
-        window.cam = new ImageRefreshCamera($("#theimg")[0], 10);
+        window.cam = new MJPEGNativeCamera($('#theimgdiv')[0], '//localhost:5000/cams/archimedes1/mjpeg');
         cam.start();
 
         setInterval(function(){
-            var fps = cam.getAverageFPS();
-            var failed = cam.getFailedFrames();
+            var failed = cam.getFailures();
 
-            $("#fpsnum").text(fps);
+            $("#fpsnum").text('N/A');
             $('#ffnum').text(failed);
         }, 1000);
     });

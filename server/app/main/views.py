@@ -17,6 +17,10 @@ def index():
 def exp_imgrefresh(cam):
     return render_template('exps/camera_imgrefresh.html')
 
+@main.route('/exps/mjpegnative/<cam>')
+def exp_mjpegnative(cam):
+    return render_template('exps/camera_mjpeg_native.html')
+
 @main.route('/test')
 def test():
     return render_template('dash.html')

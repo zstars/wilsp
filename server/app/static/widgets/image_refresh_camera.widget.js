@@ -109,7 +109,7 @@ var ImageRefreshCamera = (function () {
     ImageRefreshCamera.prototype.refresh = function () {
         // Change the image.
         this.mLastFrameTimeStart = Date.now();
-        this.mImageElement.src = Camera.getTimestampedURL(this.mImageURL);
+        this.mImageElement.src = ImageRefreshCamera.getTimestampedURL(this.mImageURL);
     }; // !refresh
     /**
      * Retrieves the provided URL but with an added __ts parameter.
@@ -129,4 +129,4 @@ var ImageRefreshCamera = (function () {
     }; // !getTimestampedURL
     return ImageRefreshCamera;
 }()); // !Camera
-//# sourceMappingURL=camera.imgrefresh.widget.js.map
+//# sourceMappingURL=image_refresh_camera.widget.js.map

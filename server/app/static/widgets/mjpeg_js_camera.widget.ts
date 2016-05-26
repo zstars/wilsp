@@ -1,9 +1,16 @@
 /// <reference path="jquery.d.ts" />
+/// <reference path="socket.io-client.d.ts" />
 
-class MJPEGNativeCamera
+
+import Socket = SocketIOClient.Socket;
+
+class MJPEGJSCamera
 {
-    private mDivElement : HTMLDivElement;
-    private mMJPEGURL : string;
+    private mCanvasElement : HTMLCanvasElement;
+    private mSocketIOURL : string;
+    private mCamName : string;
+
+    private mClient : Socket;
 
     private mRunning : boolean;
 
@@ -11,22 +18,18 @@ class MJPEGNativeCamera
     private mFailures : number; // To track the number of times we have to restart the stream somehow.
     private mStoppedTime : number; // Time the refresher was stopped, to calc FPS when not active.
 
-    private mImageElement : HTMLImageElement;
-
 
     /**
-     * Creates a Camera object, that will rely on the native browser's method for rendering MJPEG.
-     * Native MJPEG gives us no control over the FPS: it is configured server-side.
-     * @param divElement: DIV element within which the camera element will be created.
-     * @param MJPEGURL: URL to the MJPEG URL. If undefined, it will be retrieved from the src attribute.
+     * Creates a Camera object, that will rely on HTML5 Canvas and SocketIO for receiving and rendering
+     * a MJPEG stream.
+     * @param canvasElement: Canvas element on which we will draw.
+     * @param mSocketIOURL: URL to the Socket IO URL. Namespace must be included.
      */
-    public constructor(divElement: HTMLDivElement, MJPEGURL: string)
+    public constructor(canvasElement: HTMLCanvasElement, mSocketIOURL: string, camName: string)
     {
-        this.mDivElement = divElement;
-        this.mMJPEGURL = MJPEGURL;
-
-        if(this.mDivElement === undefined)
-            throw new Error('A proper MJPEG URL was not provided');
+        this.mCanvasElement = canvasElement;
+        this.mSocketIOURL = mSocketIOURL;
+        this.mCamName = camName;
     } // !ctor
 
     /**
@@ -46,15 +49,15 @@ class MJPEGNativeCamera
         this.mFailures = 0;
         this.mRunning = true;
 
-        this.mImageElement = document.createElement('img');
+        // Connect to the socketio URL.
+        this.mClient = io.connect(this.mSocketIOURL);
 
-        // Set the event handlers for the 'load' and 'error' event.
-        jQuery(this.mDivElement).on('load', this.onImageLoad.bind(this));
-        jQuery(this.mDivElement).on('error', this.onImageError.bind(this));
+		this.mClient.on('connect', function () {
+            console.log("Client connected to the server");
+            this.mClient.emit('start', {'cam': this.mCamName});
+        });
 
-        // Create the nested element.
-        this.mImageElement.src = this.mMJPEGURL;
-        this.mDivElement.appendChild(this.mImageElement);
+        // TODO:
     } // !start
 
     /**
@@ -62,9 +65,7 @@ class MJPEGNativeCamera
      */
     public stop()
     {
-        // Just remove the element so that it stops.
-        // TODO: Some browsers are reportedly bugged. Check.
-        this.mImageElement.remove();
+        this.mClient.close();
 
         this.mStoppedTime = Date.now();
     } // !stop

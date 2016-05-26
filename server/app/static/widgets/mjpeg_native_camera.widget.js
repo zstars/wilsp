@@ -13,7 +13,7 @@ var MJPEGNativeCamera = (function () {
             throw new Error('A proper MJPEG URL was not provided');
     } // !ctor
     /**
-     * Checks whether the refresher is currently running.
+     * Checks whether the camera is currently running.
      */
     MJPEGNativeCamera.prototype.isRunning = function () {
         return this.mRunning;

@@ -25,14 +25,13 @@ class Camera
     public constructor(imageElement: HTMLImageElement, targetFPS: number, imageURL: string = undefined)
     {
         this.mImageElement = imageElement;
-        this.mTargetFPS = targetFPS;
+
+        this.setTargetFPS(targetFPS);
 
         if(imageURL !== undefined)
             this.mImageURL = imageURL;
         else
             this.mImageURL = this.mImageElement.src;
-
-        this.mTargetTimePerFrame = 1 / this.mTargetFPS;
 
         if(this.mImageElement === undefined)
             throw new Error('A proper image URL was not provided, and one could not be obtained from the src attribute');
@@ -112,26 +111,37 @@ class Camera
         return this.mFramesRendered;
     }
 
+    /**
+     * Changes the target FPS.
+     * @param fps
+     */
+    public setTargetFPS(fps: number): void
+    {
+        this.mTimeStarted = Date.now();
+        this.mTargetFPS = fps;
+        this.mFramesRendered = 0;
+        this.mFailedFrames = 0;
+        this.mTargetTimePerFrame = 1 / this.mTargetFPS;
+    } // !setTargetFPS
+
     private onImageLoad()
     {
-        let elapsed: number = this.mLastFrameTimeStart - Date.now();
+        let elapsedMs: number = Date.now() - this.mLastFrameTimeStart;
         this.mFramesRendered += 1;
 
-        let sleep: number = this.mTargetTimePerFrame - elapsed / 1000;
+        let sleep: number = this.mTargetTimePerFrame - elapsedMs / 1000;
         if(sleep < 0)
             sleep = 0;
-
-        console.log('Sleeping for: ', sleep);
 
         this.mRefreshTimeout = setTimeout(this.refresh.bind(this), sleep * 1000);
     } // !onImageLoad
 
     private onImageError()
     {
-        let elapsed: number = this.mLastFrameTimeStart - Date.now();
+        let elapsedMs: number = Date.now() - this.mLastFrameTimeStart;
         this.mFailedFrames += 1;
 
-        let sleep: number = this.mTargetTimePerFrame - elapsed / 1000;
+        let sleep: number = this.mTargetTimePerFrame - elapsedMs / 1000;
         if(sleep < 0)
             sleep = 0;
 

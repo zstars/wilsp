@@ -25,7 +25,7 @@
 
 <script type="text/javascript">
     $(document).ready(function(){
-        var cam = new Camera($("#theimg")[0], 5);
+        window.cam = new Camera($("#theimg")[0], 10);
         cam.start();
 
         setInterval(function(){
@@ -33,7 +33,7 @@
             var failed = cam.getFailedFrames();
 
             $("#fpsnum").text(fps);
-            $('#ffnum').text(fps);
+            $('#ffnum').text(failed);
         }, 1000);
     });
 </script>

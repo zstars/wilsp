@@ -1,5 +1,5 @@
-/// <reference path="jquery.d.ts" />
-/// <reference path="socket.io-client.d.ts" />
+/// <reference path="typedefs/jquery.d.ts" />
+/// <reference path="typedefs/socket.io-client.d.ts" />
 
 
 import Socket = SocketIOClient.Socket;

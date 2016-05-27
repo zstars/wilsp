@@ -44,6 +44,7 @@ def mpeg_stream_start(data):
     gevent.spawn(t.run)
 
 
+
 # TODO: Connected events are actually not needed. If socket.io works without them, they should be removed.
 
 @socketio.on('connected', namespace='/mpeg')
@@ -51,28 +52,10 @@ def mpeg_stream_connected():
     print('[mpeg]: Connected event received')
 
 
-@socketio.on('connected', namespace='/mjpeg_streams')
-def mjpeg_stream_connected():
-    print('[mjpeg]: Connected to MJPEG stream')
 
 
 
-# TODO: The ones below are experiments, and they should be removed once the main widgets work.
-@socketio.on('connected', namespace='/chat')
-def handle_my_custom_event(data):
-    print('Received: ' + type(data) + ' : ' + data)
-    emit('status', {'msg': 'ok'})
-
-
-@socketio.on('hello', namespace='/chat')
-def handle_hello(data):
-    print("HELLO WAS RECEIVED")
-
-
-@socketio.on('hello')
-def handle_hello_nons():
-    print("HELLO WITH NO NS")
-
+# TODO: Below are experiments. When the widgets are working they should be removed.
 
 @socketio.on('connected', namespace='/stream')
 def connected_stream(data):

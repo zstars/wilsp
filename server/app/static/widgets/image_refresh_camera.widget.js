@@ -1,4 +1,4 @@
-/// <reference path="jquery.d.ts" />
+/// <reference path="typedefs/jquery.d.ts" />
 var ImageRefreshCamera = (function () {
     /**
      * Creates a Camera object, that will refresh the specified image element

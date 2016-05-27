@@ -1,4 +1,4 @@
-/// <reference path="jquery.d.ts" />
+/// <reference path="typedefs/jquery.d.ts" />
 var MJPEGNativeCamera = (function () {
     /**
      * Creates a Camera object, that will rely on the native browser's method for rendering MJPEG.

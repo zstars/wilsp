@@ -1,4 +1,4 @@
-/// <reference path="jquery.d.ts" />
+/// <reference path="typedefs/jquery.d.ts" />
 
 class MJPEGNativeCamera
 {

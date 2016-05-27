@@ -15,7 +15,8 @@ class MJPEGJSCamera
     private mRunning : boolean;
 
     private mTimeStarted : number;
-    private mFailures : number; // To track the number of times we have to restart the stream somehow.
+    private mFailedFrames : number = 0; // To track the number of successful frames in this period.
+    private mFramesRendered : number = 0;
     private mStoppedTime : number; // Time the refresher was stopped, to calc FPS when not active.
 
 
@@ -23,12 +24,13 @@ class MJPEGJSCamera
      * Creates a Camera object, that will rely on HTML5 Canvas and SocketIO for receiving and rendering
      * a MJPEG stream.
      * @param canvasElement: Canvas element on which we will draw.
-     * @param mSocketIOURL: URL to the Socket IO URL. Namespace must be included.
+     * @param socketIOURL: URL to the Socket IO URL. Namespace must be included.
+     * @param camName: Name of the camera.
      */
-    public constructor(canvasElement: HTMLCanvasElement, mSocketIOURL: string, camName: string)
+    public constructor(canvasElement: HTMLCanvasElement, socketIOURL: string, camName: string)
     {
         this.mCanvasElement = canvasElement;
-        this.mSocketIOURL = mSocketIOURL;
+        this.mSocketIOURL = socketIOURL;
         this.mCamName = camName;
     } // !ctor
 
@@ -46,19 +48,67 @@ class MJPEGJSCamera
     public start()
     {
         this.mTimeStarted = Date.now();
-        this.mFailures = 0;
+        this.mFailedFrames = 0;
+        this.mFramesRendered = 0;
         this.mRunning = true;
 
         // Connect to the socketio URL.
         this.mClient = io.connect(this.mSocketIOURL);
 
+        let that = this;
 		this.mClient.on('connect', function () {
             console.log("Client connected to the server");
-            this.mClient.emit('start', {'cam': this.mCamName});
+            that.mClient.emit('start', {'cam': that.mCamName});
         });
 
-        // TODO:
+        this.mClient.on('frame', this.onFrameReceived.bind(this));
     } // !start
+
+
+    /**
+     * Called when new frame data is received and should be rendered.
+     * @param imageData
+     */
+    private onFrameReceived(imageData: Uint8Array)
+    {
+        var ctx:CanvasRenderingContext2D = this.mCanvasElement.getContext("2d");
+
+        var b64encoded = btoa(String.fromCharCode.apply(null, imageData));
+
+        var img = new Image();
+        img.src = "data:image/png;base64," + b64encoded;
+
+        img.onload = () => {
+            console.log("Image Onload");
+            ctx.drawImage(img, 0, 0, 640, 480);
+        };
+
+        img.onerror = () => {
+            console.log("Imageg Onerror");
+        };
+    } // !onFrameReceived
+
+    /**
+     * Gets the average FPS during the current active period or the latest period if we are stopped.
+     * @returns {number}
+     */
+    public getAverageFPS(): number
+    {
+        let finalTime : number;
+        if(this.isRunning())
+            finalTime = Date.now();
+        else
+            finalTime = this.mStoppedTime;
+
+        let elapsed : number = finalTime - this.mTimeStarted;
+        if(elapsed === 0)
+        {
+            return 0;
+        }
+
+        let fps : number = this.mFramesRendered / (elapsed/1000);
+        return fps;
+    } // !getAverageFPS
 
     /**
      * Stops refreshing.
@@ -66,34 +116,25 @@ class MJPEGJSCamera
     public stop()
     {
         this.mClient.close();
-
         this.mStoppedTime = Date.now();
     } // !stop
 
     /**
-     * Retrieves the number of failures in the last active period.
+     * Retrieves the number of failed frames in the last active period.
      * @returns {number}
      */
-    public getFailures(): number
+    public getFailedFrames(): number
     {
-        return this.mFailures;
+        return this.mFailedFrames;
     }
 
-    private onImageLoad()
+    /**
+     * Retrieves the number of successful frames in the last active period.
+     */
+    public getSuccessfulFrames(): number
     {
-    } // !onImageLoad
-
-    private onImageError()
-    {
-        console.error('Error while loading MJPEG image. Restarting stream in 500 ms.');
-
-        let that = this;
-
-        setTimeout(function() {
-            that.stop();
-            that.start();
-        }, 500);
-    } // !onImageError
+        return this.mFramesRendered;
+    }
 
     /**
      * Retrieves the provided URL but with an added __ts parameter.

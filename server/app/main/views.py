@@ -23,6 +23,10 @@ def exp_mjpegnative(cam):
 
 @main.route('/exps/mjpegjs/<cam>')
 def exp_mjpegjs(cam):
+    return render_template('exps/camera_mjpeg_js.html')
+
+@main.route('/exps/mpegjs/<cam>')
+def exp_mpegjs(cam):
     return render_template('exps/camera_mpeg_js.html')
 
 @main.route('/test')

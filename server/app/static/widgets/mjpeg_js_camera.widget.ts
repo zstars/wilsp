@@ -32,6 +32,11 @@ class MJPEGJSCamera
         this.mCanvasElement = canvasElement;
         this.mSocketIOURL = socketIOURL;
         this.mCamName = camName;
+
+        if(!(canvasElement instanceof HTMLCanvasElement))
+            throw Error('canvasElement must be an HTMLCanvasElement');
+        if(camName === undefined)
+            throw Error('camName must be defined');
     } // !ctor
 
     /**
@@ -69,22 +74,24 @@ class MJPEGJSCamera
      * Called when new frame data is received and should be rendered.
      * @param imageData
      */
-    private onFrameReceived(imageData: Uint8Array)
+    private onFrameReceived(imageData: ArrayBuffer)
     {
-        var ctx:CanvasRenderingContext2D = this.mCanvasElement.getContext("2d");
+        let ctx:CanvasRenderingContext2D = this.mCanvasElement.getContext("2d");
 
-        var b64encoded = btoa(String.fromCharCode.apply(null, imageData));
+        let imageDataBytes = new Uint8Array(imageData);
+        var b64encoded = btoa(String.fromCharCode.apply(null, imageDataBytes));
 
         var img = new Image();
         img.src = "data:image/png;base64," + b64encoded;
 
         img.onload = () => {
-            console.log("Image Onload");
             ctx.drawImage(img, 0, 0, 640, 480);
+            this.mFramesRendered += 1;
         };
 
         img.onerror = () => {
-            console.log("Imageg Onerror");
+            console.error("[mjpeg]: Image error");
+            this.mFailedFrames += 1;
         };
     } // !onFrameReceived
 
@@ -115,6 +122,7 @@ class MJPEGJSCamera
      */
     public stop()
     {
+        this.mRunning = false;
         this.mClient.close();
         this.mStoppedTime = Date.now();
     } // !stop

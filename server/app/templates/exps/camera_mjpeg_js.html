@@ -29,7 +29,7 @@
 
 <script type="text/javascript">
     $(document).ready(function(){
-        window.cam = new MJPEGJSCamera($('#mycanvas')[0], 'http://' + document.domain + ':' + location.port + '/mjpeg_stream');
+        window.cam = new MJPEGJSCamera($('#mycanvas')[0], 'http://' + document.domain + ':' + location.port + '/mjpeg', 'archimedes1');
         cam.start();
 
         setInterval(function(){

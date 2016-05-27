@@ -41,7 +41,7 @@
 		// var client = new WebSocket( 'ws://localhost:8084/' );
 
         // Setup the SocketIO connection and start the player
-        var client = io.connect('http://' + document.domain + ':' + location.port + '/mjpeg_stream');
+        var client = io.connect('http://' + document.domain + ':' + location.port + '/mjpeg');
         client.on('connect', function () {
             console.log("Client connected to the server (mjpeg)");
             client.emit('connected', '');

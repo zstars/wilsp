@@ -62,6 +62,8 @@ class MJPEGNativeCamera
      */
     public stop()
     {
+        this.mRunning = false;
+
         // Just remove the element so that it stops.
         // TODO: Some browsers are reportedly bugged. Check.
         this.mImageElement.remove();

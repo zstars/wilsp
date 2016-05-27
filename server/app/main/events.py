@@ -8,49 +8,25 @@ from app.main.SocketIOMPEGRedisBroadcaster import SocketIOMPEGRedisBroadcaster
 from app.main.redis_funcs import mark_active
 from .. import socketio
 
-@socketio.on('connected', namespace='/chat')
-def handle_my_custom_event(data):
-    print('Received: ' + type(data) + ' : ' + data)
-    emit('status', {'msg': 'ok'})
 
-@socketio.on('hello', namespace='/chat')
-def handle_hello(data):
-    print("HELLO WAS RECEIVED")
+@socketio.on('start', namespace='/mjpeg')
+def mjpeg_stream_start(data):
+    print('[mjpeg]: Starting MJPEG stream')
 
-@socketio.on('hello')
-def handle_hello_nons():
-    print("HELLO WITH NO NS")
+    cam = data['cam']
 
-@socketio.on('connected', namespace='/stream')
-def connected_stream(data):
-    print('Connected to stream')
-    emit('status', {'msg': 'connected indeed'})
+    # request.sid contains the unique identifier of the client that sent ht events, which is also the channel
+    # name that shoul enable us ot send messages specifically to that client.
+    client_sid = request.sid
 
     # Start the broadcaster
-    t = SocketIOMPEGBroadcaster()
+    t = SocketIOMJPEGBroadcaster(cam, client_sid)
     gevent.spawn(t.run)
 
-@socketio.on('connected', namespace='/mjpeg_stream')
-def connected_mjpeg_stream(data):
-    print('Connected to MJPEG stream')
-    emit('status', {'msg': 'connected indeed'})
-
-    # Start the broadcaster
-    t = SocketIOMJPEGBroadcaster()
-    gevent.spawn(t.run)
-
-@socketio.on('connected', namespace='/mpeg')
-def mpeg_stream_connected(data):
-    """
-    TODO: This event is probably not needed because a start is sent anyway.
-    :param data:
-    :return:
-    """
-    print('Connected event received')
 
 @socketio.on('start', namespace='/mpeg')
 def mpeg_stream_start(data):
-    print('Starting MPEG stream')
+    print('[mpeg]: Starting MPEG stream')
 
     cam = data['cam']
 
@@ -62,7 +38,47 @@ def mpeg_stream_start(data):
     client_sid = request.sid
 
     # Start the broadcaster
-    # Though there might be some more efficient way through broadcasting, for now we create a broadcaster greenlet
+    # Though there might be some more efficient ways through broadcasting, for now we create a broadcaster greenlet
     # for every client, and we pass it the client_sid so that it can send data to a specific client.
     t = SocketIOMPEGRedisBroadcaster(cam, client_sid)
+    gevent.spawn(t.run)
+
+
+# TODO: Connected events are actually not needed. If socket.io works without them, they should be removed.
+
+@socketio.on('connected', namespace='/mpeg')
+def mpeg_stream_connected():
+    print('[mpeg]: Connected event received')
+
+
+@socketio.on('connected', namespace='/mjpeg_streams')
+def mjpeg_stream_connected():
+    print('[mjpeg]: Connected to MJPEG stream')
+
+
+
+# TODO: The ones below are experiments, and they should be removed once the main widgets work.
+@socketio.on('connected', namespace='/chat')
+def handle_my_custom_event(data):
+    print('Received: ' + type(data) + ' : ' + data)
+    emit('status', {'msg': 'ok'})
+
+
+@socketio.on('hello', namespace='/chat')
+def handle_hello(data):
+    print("HELLO WAS RECEIVED")
+
+
+@socketio.on('hello')
+def handle_hello_nons():
+    print("HELLO WITH NO NS")
+
+
+@socketio.on('connected', namespace='/stream')
+def connected_stream(data):
+    print('Connected to stream')
+    emit('status', {'msg': 'connected indeed'})
+
+    # Start the broadcaster
+    t = SocketIOMPEGBroadcaster()
     gevent.spawn(t.run)

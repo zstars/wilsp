@@ -15,19 +15,19 @@ def index():
 
 @main.route('/exps/imgrefresh/<cam>')
 def exp_imgrefresh(cam):
-    return render_template('exps/camera_image_refresh.html')
+    return render_template('exps/camera_image_refresh.html', cam=cam)
 
 @main.route('/exps/mjpegnative/<cam>')
 def exp_mjpegnative(cam):
-    return render_template('exps/camera_mjpeg_native.html')
+    return render_template('exps/camera_mjpeg_native.html', cam=cam)
 
 @main.route('/exps/mjpegjs/<cam>')
 def exp_mjpegjs(cam):
-    return render_template('exps/camera_mjpeg_js.html')
+    return render_template('exps/camera_mjpeg_js.html', cam=cam)
 
 @main.route('/exps/mpegjs/<cam>')
 def exp_mpegjs(cam):
-    return render_template('exps/camera_mpeg_js.html')
+    return render_template('exps/camera_mpeg_js.html', cam=cam)
 
 count = 0
 

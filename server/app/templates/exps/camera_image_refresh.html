@@ -10,7 +10,7 @@
 <body>
 
 <h3>Image Refresh View</h3>
-<img id="theimg" src="//localhost:5000/cams/archimedes1"/>
+<img id="theimg" src="{{ url_for('.cam', cam_id=cam) }}"/>
 
 <table>
     <tr>

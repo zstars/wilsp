@@ -1,6 +1,5 @@
 import gevent
 from flask import request
-from flask.ext.socketio import emit
 
 from app.main.SocketIOMJPEGBroadcaster import SocketIOMJPEGBroadcaster
 from app.main.SocketIOMPEGRedisBroadcaster import SocketIOMPEGRedisBroadcaster
@@ -41,12 +40,4 @@ def mpeg_stream_start(data):
     # for every client, and we pass it the client_sid so that it can send data to a specific client.
     t = SocketIOMPEGRedisBroadcaster(cam, client_sid)
     gevent.spawn(t.run)
-
-
-
-# TODO: Connected events are actually not needed. If socket.io works without them, they should be removed.
-
-@socketio.on('connected', namespace='/mpeg')
-def mpeg_stream_connected():
-    print('[mpeg]: Connected event received')
 

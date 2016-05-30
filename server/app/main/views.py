@@ -29,22 +29,6 @@ def exp_mjpegjs(cam):
 def exp_mpegjs(cam):
     return render_template('exps/camera_mpeg_js.html')
 
-@main.route('/test')
-def test():
-    return render_template('dash.html')
-
-@main.route('/test_socketio')
-def test_socketio():
-    return render_template('socketio/test.html')
-
-@main.route('/test_mjpeg_streaming')
-def test_streaming():
-    return render_template('wsmjpeg/stream-example.html')
-
-@main.route('/test/mpeg_streaming')
-def test_mpeg_streaming():
-    return render_template('wsmpeg/stream-example.html')
-
 count = 0
 
 def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
@@ -142,12 +126,6 @@ def test_gen(data):
         n += 1
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + data + b'\r\n')
-
-@main.route('/cams/tests/test')
-def cams_tests_test():
-    data = open("app/static/no_image_available.png", "rb").read()
-    return Response(test_gen(data), mimetype='multipart/x-mixed-replace; boundary=frame')
-
 
 @main.route('/cams/<cam_id>')
 def cam(cam_id):

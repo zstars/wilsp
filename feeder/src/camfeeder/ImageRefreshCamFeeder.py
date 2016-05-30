@@ -17,6 +17,8 @@ class ImageRefreshCamFeeder(CamFeeder):
     (Most IP cameras provide such an URL).
     """
 
+    REQUEST_TIMEOUT = 15
+
     def __init__(self, rdb: redis.StrictRedis, redis_prefix: str, cam_name: str, url: str, max_fps: int,
                  rotation: float = None):
         super().__init__(rdb, redis_prefix, cam_name, url, max_fps, rotation)
@@ -57,7 +59,7 @@ class ImageRefreshCamFeeder(CamFeeder):
         :return:
         """
         try:
-            rs = [grequests.get(self._url, stream=True)]
+            rs = [grequests.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)]
             r = grequests.map(rs)[0]
             if r.status_code != 200:
                 raise FrameGrabbingException("Status code is not 200")

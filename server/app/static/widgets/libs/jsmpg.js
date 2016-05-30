@@ -46,7 +46,9 @@
         this.zeroBlockData = new Int32Array(64);
         this.fillArray(this.zeroBlockData, 0);
 
+        // Custom additions for socket io and stats support.
         this.useSocketIO = opts.useSocketIO || false;
+        this.framesRendered = 0;
 
         // use WebGL for YCbCrToRGBA conversion if possible (much faster)
         if (!opts.forceCanvas2D && this.initWebGL()) {
@@ -925,6 +927,8 @@
     jsmpeg.prototype.renderFrame2D = function () {
         this.YCbCrToRGBA();
         this.canvasContext.putImageData(this.currentRGBA, 0, 0);
+
+        this.framesRendered += 1;
     };
 
 
@@ -1043,6 +1047,8 @@
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, this.halfWidth, this.height / 2, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, uint8Cb);
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        this.framesRendered += 1;
     };
 
 

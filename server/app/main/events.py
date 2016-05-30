@@ -3,7 +3,6 @@ from flask import request
 from flask.ext.socketio import emit
 
 from app.main.SocketIOMJPEGBroadcaster import SocketIOMJPEGBroadcaster
-from app.main.SocketIOMPEGBroadcaster import SocketIOMPEGBroadcaster
 from app.main.SocketIOMPEGRedisBroadcaster import SocketIOMPEGRedisBroadcaster
 from app.main.redis_funcs import mark_active
 from .. import socketio
@@ -51,17 +50,3 @@ def mpeg_stream_start(data):
 def mpeg_stream_connected():
     print('[mpeg]: Connected event received')
 
-
-
-
-
-# TODO: Below are experiments. When the widgets are working they should be removed.
-
-@socketio.on('connected', namespace='/stream')
-def connected_stream(data):
-    print('Connected to stream')
-    emit('status', {'msg': 'connected indeed'})
-
-    # Start the broadcaster
-    t = SocketIOMPEGBroadcaster()
-    gevent.spawn(t.run)

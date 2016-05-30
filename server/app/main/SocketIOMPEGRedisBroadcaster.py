@@ -65,8 +65,6 @@ class SocketIOMPEGRedisBroadcaster(object):
         while True:
             for item in rchannel.listen():
 
-                print("Emitting event")
-
                 # Print commented out because it works and spams the console.
                 # print('Received: {}'.format(item))
                 if item['type'] == 'message':

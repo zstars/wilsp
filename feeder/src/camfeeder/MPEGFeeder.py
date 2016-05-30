@@ -1,6 +1,7 @@
 import subprocess
-
 import gevent
+
+import config
 
 
 class MPEGFeeder(object):
@@ -15,6 +16,9 @@ class MPEGFeeder(object):
         self._mjpeg_source = mjpeg_source
         self._rdb = rdb
 
+        self._ffmpeg_bin = config.FFMPEG_BIN
+
+
     def _run(self):
         # Redis channel
         redis_channel = '{}/mpeg'.format(self._cam_name)
@@ -22,7 +26,7 @@ class MPEGFeeder(object):
         # For debugging only.
         self._mjpeg_source = "http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg"
 
-        ffmpeg_command = ['/opt/local/bin/ffmpeg', '-r', '30', '-i', self._mjpeg_source, '-f', 'mpeg1video', '-b', '800k', '-r', '30', "pipe:1"]
+        ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-i', self._mjpeg_source, '-f', 'mpeg1video', '-b', '800k', '-r', '30', "pipe:1"]
 
         print("Running FFMPEG command: {}".format(ffmpeg_command))
 

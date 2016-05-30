@@ -24,3 +24,4 @@ mockredispy
 python-dateutil
 Flask-SocketIO
 mock
+gevent-websockets==0.9.5

@@ -38,7 +38,7 @@ var MJPEGJSCamera = (function () {
         this.mFramesRendered = 0;
         this.mRunning = true;
         // Connect to the socketio URL.
-        this.mClient = io.connect(this.mSocketIOURL, { path: this.mSocketIOPath, transports: ['polling'] });
+        this.mClient = io.connect(this.mSocketIOURL, { path: this.mSocketIOPath });
         var that = this;
         this.mClient.on('connect', function () {
             console.log("Client connected to the server");

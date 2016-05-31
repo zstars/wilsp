@@ -38,7 +38,7 @@ var MPEGJSCamera = (function () {
         this.mFramesRendered = 0;
         this.mRunning = true;
         var that = this;
-        this.mClient = io.connect(this.mSocketIOURL, { path: this.mSocketIOPath, transports: ['polling'] });
+        this.mClient = io.connect(this.mSocketIOURL, { path: this.mSocketIOPath });
         this.mClient.on('connect', function () {
             console.log("Client connected to the server");
             that.mClient.emit('start', { 'cam': that.mCamName });

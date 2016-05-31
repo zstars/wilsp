@@ -1,4 +1,4 @@
-import gevent
+import eventlet
 
 from flask import current_app
 from app import socketio, rdb
@@ -49,5 +49,5 @@ class SocketIOMJPEGBroadcaster(object):
                 socketio.emit('frame', not_available, namespace=SocketIOMJPEGBroadcaster.SOCKETIO_NAMESPACE,
                               room=self._client_sid)
 
-            gevent.sleep(1)
+            eventlet.sleep(1)
             print("Iteration")

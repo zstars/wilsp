@@ -1,4 +1,4 @@
-import gevent
+import eventlet
 from flask import request
 
 from app.main.SocketIOMJPEGBroadcaster import SocketIOMJPEGBroadcaster
@@ -19,7 +19,7 @@ def mjpeg_stream_start(data):
 
     # Start the broadcaster
     t = SocketIOMJPEGBroadcaster(cam, client_sid)
-    gevent.spawn(t.run)
+    eventlet.spawn(t.run)
 
 
 @socketio.on('start', namespace='/mpeg')
@@ -39,5 +39,5 @@ def mpeg_stream_start(data):
     # Though there might be some more efficient ways through broadcasting, for now we create a broadcaster greenlet
     # for every client, and we pass it the client_sid so that it can send data to a specific client.
     t = SocketIOMPEGRedisBroadcaster(cam, client_sid)
-    gevent.spawn(t.run)
+    eventlet.spawn(t.run)
 

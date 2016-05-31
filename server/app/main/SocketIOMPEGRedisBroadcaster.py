@@ -1,13 +1,12 @@
-import gevent
 import struct
 
 from app import socketio, rdb
 from io import BytesIO
 
-from gevent import monkey
+from eventlet import monkey_patch
 
 # So that redis pubsub listen can be done asynchronously.
-monkey.patch_all()
+monkey_patch(all=True)
 
 
 class SocketIOMPEGRedisBroadcaster(object):

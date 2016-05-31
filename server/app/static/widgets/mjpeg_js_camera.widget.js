@@ -8,8 +8,9 @@ var MJPEGJSCamera = (function () {
      * @param socketIOURL: URL to the Socket IO URL. Namespace must be included.
      * @param camName: Name of the camera.
      * @param socketIOPath: Path to the socketio endpoint. Optional.
+     * @param targetFPS: Target FPS to ask from the server. Optional. Default: 5.
      */
-    function MJPEGJSCamera(canvasElement, socketIOURL, camName, socketIOPath) {
+    function MJPEGJSCamera(canvasElement, socketIOURL, camName, socketIOPath, targetFPS) {
         this.mFailedFrames = 0; // To track the number of successful frames in this period.
         this.mFramesRendered = 0;
         this.mCanvasElement = canvasElement;
@@ -22,6 +23,8 @@ var MJPEGJSCamera = (function () {
             throw Error('camName must be defined');
         if (socketIOPath === undefined)
             this.mSocketIOPath = "";
+        if (targetFPS === undefined)
+            this.mTargetFPS = 5;
     } // !ctor
     /**
      * Checks whether the camera is currently running.
@@ -42,7 +45,7 @@ var MJPEGJSCamera = (function () {
         var that = this;
         this.mClient.on('connect', function () {
             console.log("Client connected to the server");
-            that.mClient.emit('start', { 'cam': that.mCamName });
+            that.mClient.emit('start', { 'cam': that.mCamName, 'tfps': that.mTargetFPS });
         });
         this.mClient.on('frame', this.onFrameReceived.bind(this));
     }; // !start

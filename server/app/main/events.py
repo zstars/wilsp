@@ -13,12 +13,15 @@ def mjpeg_stream_start(data):
 
     cam = data['cam']
 
+    # Target FPS.
+    tfps = data.get('tfps', 5)
+
     # request.sid contains the unique identifier of the client that sent ht events, which is also the channel
     # name that shoul enable us ot send messages specifically to that client.
     client_sid = request.sid
 
     # Start the broadcaster
-    t = SocketIOMJPEGBroadcaster(cam, client_sid)
+    t = SocketIOMJPEGBroadcaster(cam, client_sid, tfps)
     eventlet.spawn(t.run)
 
 

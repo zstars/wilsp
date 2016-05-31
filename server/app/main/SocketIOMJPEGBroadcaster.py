@@ -1,4 +1,5 @@
 import eventlet
+import time
 
 from flask import current_app
 from app import socketio, rdb
@@ -20,35 +21,43 @@ class SocketIOMJPEGBroadcaster(object):
 
     SOCKETIO_NAMESPACE = '/mjpeg'
 
-    def __init__(self, cam_name, client_sid):
+    def __init__(self, cam_name, client_sid, fps=5):
         self._cam_name = cam_name
+        self._fps = fps
+        self._target_sleep = 1.0 / self._fps
+
         print("CLIENT SID IS: ", client_sid)
         self._client_sid = client_sid
 
         self._cam_key = '{}:cams:{}'.format(current_app.config['REDIS_PREFIX'], self._cam_name)
 
     def run(self):
-        print("Running SocketIO MJPEG broadcaster")
+        print("Running SocketIO MJPEG broadcaster at {} target FPS".format(self._fps))
 
         not_available = open("app/static/no_image_available.png", "rb").read()
 
         while True:
+
+            frame_start_time = time.time()
+
 
             frame = rdb.get(self._cam_key + ":lastframe")
 
             # Mark the cam as active. This signals the feeder so that it starts working on this. It could potentially
             # be made more efficient by working in a background
             # thread, but that would be overkill for now.
-            rdb.setex(self._cam_key + ":active", 1, 30)
+            rdb.setex(self._cam_key + ":active", 30, 1)
 
             if frame is not None:
-                print("Rendering REAL frame")
                 socketio.emit('frame', frame, namespace=SocketIOMJPEGBroadcaster.SOCKETIO_NAMESPACE,
                               room=self._client_sid)
             else:
-                print("Rendering NOT AVAILABLE frame")
                 socketio.emit('frame', not_available, namespace=SocketIOMJPEGBroadcaster.SOCKETIO_NAMESPACE,
                               room=self._client_sid)
 
-            eventlet.sleep(1)
-            print("Iteration")
+
+            time_to_sleep = self._target_sleep - (time.time() - frame_start_time)
+            if(time_to_sleep < 0):
+                time_to_sleep = 0
+
+            eventlet.sleep(time_to_sleep)

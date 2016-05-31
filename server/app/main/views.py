@@ -23,8 +23,9 @@ def exp_mjpegnative(cam):
 
 @main.route('/exps/mjpegjs/<cam>')
 def exp_mjpegjs(cam):
+    tfps = request.values.get('tfps', 5)
     path = current_app.config.get('SOCKETIO_PATH', '')
-    return render_template('exps/camera_mjpeg_js.html', cam=cam, socketio_path=path)
+    return render_template('exps/camera_mjpeg_js.html', cam=cam, socketio_path=path, tfps=tfps)
 
 @main.route('/exps/mpegjs/<cam>')
 def exp_mpegjs(cam):

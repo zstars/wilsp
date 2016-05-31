@@ -33,8 +33,7 @@ def runprod():
                  host='127.0.0.1',
                  port=8500,
                  use_reloader=False,
-                 engine_io_logger=True,
-                 async_mode='eventlet')
+                 )
 
 manager.add_command("shell", Shell(make_context=make_shell_context()))
 manager.add_command("runserver", RunServerSocketIO())

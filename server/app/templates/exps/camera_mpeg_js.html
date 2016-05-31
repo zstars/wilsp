@@ -29,7 +29,7 @@
 
 <script type="text/javascript">
     $(document).ready(function(){
-        window.cam = new MPEGJSCamera($('#mycanvas')[0], 'http://' + document.domain + ':' + location.port + '/mpeg', '{{ cam }}');
+        window.cam = new MPEGJSCamera($('#mycanvas')[0], location.protocol + '//' + document.domain + ':' + location.port + '/mpeg', '{{ cam }}');
         cam.start();
 
         setInterval(function(){

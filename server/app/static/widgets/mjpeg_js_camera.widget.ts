@@ -27,6 +27,7 @@ class MJPEGJSCamera
      * @param canvasElement: Canvas element on which we will draw.
      * @param socketIOURL: URL to the Socket IO URL. Namespace must be included.
      * @param camName: Name of the camera.
+     * @param socketIOPath: Path to the socketio endpoint. Optional.
      */
     public constructor(canvasElement: HTMLCanvasElement, socketIOURL: string, camName: string, socketIOPath: string)
     {
@@ -62,7 +63,7 @@ class MJPEGJSCamera
         this.mRunning = true;
 
         // Connect to the socketio URL.
-        this.mClient = io.connect(this.mSocketIOURL);
+        this.mClient = io.connect(this.mSocketIOURL, {path: this.mSocketIOPath});
 
         let that = this;
 		this.mClient.on('connect', function () {

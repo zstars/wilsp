@@ -7,6 +7,7 @@ var MJPEGJSCamera = (function () {
      * @param canvasElement: Canvas element on which we will draw.
      * @param socketIOURL: URL to the Socket IO URL. Namespace must be included.
      * @param camName: Name of the camera.
+     * @param socketIOPath: Path to the socketio endpoint. Optional.
      */
     function MJPEGJSCamera(canvasElement, socketIOURL, camName, socketIOPath) {
         this.mFailedFrames = 0; // To track the number of successful frames in this period.
@@ -37,7 +38,7 @@ var MJPEGJSCamera = (function () {
         this.mFramesRendered = 0;
         this.mRunning = true;
         // Connect to the socketio URL.
-        this.mClient = io.connect(this.mSocketIOURL);
+        this.mClient = io.connect(this.mSocketIOURL, { path: this.mSocketIOPath });
         var that = this;
         this.mClient.on('connect', function () {
             console.log("Client connected to the server");

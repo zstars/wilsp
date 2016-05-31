@@ -37,7 +37,8 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
     except ValueError:
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + not_available + b'\r\n')
-        return make_response("Wrong value: Rotate must be a float", 400)
+        yield make_response("Wrong value: Rotate must be a float", 400)
+        return  # Return in a generator must be empty.
 
     cam_key = redis_prefix + ":cams:" + cam_id
 

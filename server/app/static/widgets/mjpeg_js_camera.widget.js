@@ -8,16 +8,19 @@ var MJPEGJSCamera = (function () {
      * @param socketIOURL: URL to the Socket IO URL. Namespace must be included.
      * @param camName: Name of the camera.
      */
-    function MJPEGJSCamera(canvasElement, socketIOURL, camName) {
+    function MJPEGJSCamera(canvasElement, socketIOURL, camName, socketIOPath) {
         this.mFailedFrames = 0; // To track the number of successful frames in this period.
         this.mFramesRendered = 0;
         this.mCanvasElement = canvasElement;
         this.mSocketIOURL = socketIOURL;
         this.mCamName = camName;
+        this.mSocketIOPath = socketIOPath;
         if (!(canvasElement instanceof HTMLCanvasElement))
             throw Error('canvasElement must be an HTMLCanvasElement');
         if (camName === undefined)
             throw Error('camName must be defined');
+        if (socketIOPath === undefined)
+            this.mSocketIOPath = "";
     } // !ctor
     /**
      * Checks whether the camera is currently running.

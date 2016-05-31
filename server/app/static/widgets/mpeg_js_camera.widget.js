@@ -8,16 +8,20 @@ var MPEGJSCamera = (function () {
      * @param socketIOURL: URL to the Socket IO URL. Namespace must be included.
      * @param camName: Name of the camera.
      */
-    function MPEGJSCamera(canvasElement, socketIOURL, camName) {
+    function MPEGJSCamera(canvasElement, socketIOURL, camName, socketIOPath) {
         this.mFailedFrames = 0; // To track the number of successful frames in this period.
         this.mFramesRendered = 0;
         this.mCanvasElement = canvasElement;
         this.mSocketIOURL = socketIOURL;
         this.mCamName = camName;
+        this.mSocketIOPath = socketIOPath;
         if (!(canvasElement instanceof HTMLCanvasElement))
             throw Error('canvasElement must be an HTMLCanvasElement');
         if (camName === undefined)
             throw Error('camName must be defined');
+        if (socketIOPath == undefined) {
+            this.mSocketIOPath = "";
+        }
     } // !ctor
     /**
      * Checks whether the camera is currently running.
@@ -34,7 +38,7 @@ var MPEGJSCamera = (function () {
         this.mFramesRendered = 0;
         this.mRunning = true;
         var that = this;
-        this.mClient = io.connect(this.mSocketIOURL);
+        this.mClient = io.connect(this.mSocketIOURL, { path: this.mSocketIOPath });
         this.mClient.on('connect', function () {
             console.log("Client connected to the server");
             that.mClient.emit('start', { 'cam': that.mCamName });

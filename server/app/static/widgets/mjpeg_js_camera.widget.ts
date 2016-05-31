@@ -8,6 +8,7 @@ class MJPEGJSCamera
 {
     private mCanvasElement : HTMLCanvasElement;
     private mSocketIOURL : string;
+    private mSocketIOPath: string;
     private mCamName : string;
 
     private mClient : Socket;
@@ -27,16 +28,19 @@ class MJPEGJSCamera
      * @param socketIOURL: URL to the Socket IO URL. Namespace must be included.
      * @param camName: Name of the camera.
      */
-    public constructor(canvasElement: HTMLCanvasElement, socketIOURL: string, camName: string)
+    public constructor(canvasElement: HTMLCanvasElement, socketIOURL: string, camName: string, socketIOPath: string)
     {
         this.mCanvasElement = canvasElement;
         this.mSocketIOURL = socketIOURL;
         this.mCamName = camName;
+        this.mSocketIOPath = socketIOPath;
 
         if(!(canvasElement instanceof HTMLCanvasElement))
             throw Error('canvasElement must be an HTMLCanvasElement');
         if(camName === undefined)
             throw Error('camName must be defined');
+        if(socketIOPath === undefined)
+            this.mSocketIOPath = "";
     } // !ctor
 
     /**

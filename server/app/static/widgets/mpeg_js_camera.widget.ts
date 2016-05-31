@@ -9,6 +9,7 @@ class MPEGJSCamera
 {
     private mCanvasElement : HTMLCanvasElement;
     private mSocketIOURL : string;
+    private mSocketIOPath : string;
     private mCamName : string;
 
     private mClient : Socket;
@@ -30,16 +31,20 @@ class MPEGJSCamera
      * @param socketIOURL: URL to the Socket IO URL. Namespace must be included.
      * @param camName: Name of the camera.
      */
-    public constructor(canvasElement: HTMLCanvasElement, socketIOURL: string, camName: string)
+    public constructor(canvasElement: HTMLCanvasElement, socketIOURL: string, camName: string, socketIOPath: string)
     {
         this.mCanvasElement = canvasElement;
         this.mSocketIOURL = socketIOURL;
         this.mCamName = camName;
+        this.mSocketIOPath = socketIOPath;
 
         if(!(canvasElement instanceof HTMLCanvasElement))
             throw Error('canvasElement must be an HTMLCanvasElement');
         if(camName === undefined)
             throw Error('camName must be defined');
+        if(socketIOPath == undefined) {
+            this.mSocketIOPath = "";
+        }
     } // !ctor
 
     /**
@@ -61,7 +66,7 @@ class MPEGJSCamera
         this.mRunning = true;
 
         let that = this;
-        this.mClient = io.connect(this.mSocketIOURL);
+        this.mClient = io.connect(this.mSocketIOURL, {path: this.mSocketIOPath});
 		this.mClient.on('connect', function () {
             console.log("Client connected to the server");
             that.mClient.emit('start', {'cam': that.mCamName});

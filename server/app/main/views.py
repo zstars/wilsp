@@ -23,11 +23,13 @@ def exp_mjpegnative(cam):
 
 @main.route('/exps/mjpegjs/<cam>')
 def exp_mjpegjs(cam):
-    return render_template('exps/camera_mjpeg_js.html', cam=cam)
+    path = current_app.config.get('SOCKETIO_PATH', '')
+    return render_template('exps/camera_mjpeg_js.html', cam=cam, socketio_path=path)
 
 @main.route('/exps/mpegjs/<cam>')
 def exp_mpegjs(cam):
-    return render_template('exps/camera_mpeg_js.html', cam=cam)
+    path = current_app.config.get('SOCKETIO_PATH', '')
+    return render_template('exps/camera_mpeg_js.html', cam=cam, socketio_path=path)
 
 count = 0
 

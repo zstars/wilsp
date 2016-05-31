@@ -63,7 +63,7 @@ class MJPEGJSCamera
         this.mRunning = true;
 
         // Connect to the socketio URL.
-        this.mClient = io.connect(this.mSocketIOURL, {path: this.mSocketIOPath});
+        this.mClient = io.connect(this.mSocketIOURL, {path: this.mSocketIOPath, transports: ['polling']});
 
         let that = this;
 		this.mClient.on('connect', function () {

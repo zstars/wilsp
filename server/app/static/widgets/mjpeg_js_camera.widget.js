@@ -17,6 +17,7 @@ var MJPEGJSCamera = (function () {
         this.mSocketIOURL = socketIOURL;
         this.mCamName = camName;
         this.mSocketIOPath = socketIOPath;
+        this.mTargetFPS = targetFPS;
         if (!(canvasElement instanceof HTMLCanvasElement))
             throw Error('canvasElement must be an HTMLCanvasElement');
         if (camName === undefined)

@@ -1,5 +1,7 @@
-from flask.ext.socketio import SocketIO
+from eventlet import monkey_patch
+monkey_patch(all=True)
 
+from flask.ext.socketio import SocketIO
 from flask import Flask, render_template
 from flask.ext.bootstrap import Bootstrap
 from flask.ext.mail import Mail

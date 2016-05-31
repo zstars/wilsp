@@ -1,12 +1,12 @@
+
+from eventlet import monkey_patch
+monkey_patch(all=True)
+
 import struct
 
 from app import socketio, rdb
 from io import BytesIO
 
-from eventlet import monkey_patch
-
-# So that redis pubsub listen can be done asynchronously.
-monkey_patch(all=True)
 
 
 class SocketIOMPEGRedisBroadcaster(object):

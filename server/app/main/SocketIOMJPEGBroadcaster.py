@@ -22,6 +22,7 @@ class SocketIOMJPEGBroadcaster(object):
 
     def __init__(self, cam_name, client_sid):
         self._cam_name = cam_name
+        print("CLIENT SID IS: ", client_sid)
         self._client_sid = client_sid
 
         self._cam_key = '{}:cams:{}'.format(current_app.config['REDIS_PREFIX'], self._cam_name)

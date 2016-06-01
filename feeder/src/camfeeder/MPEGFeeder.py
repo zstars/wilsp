@@ -24,7 +24,7 @@ class MPEGFeeder(object):
         redis_channel = '{}/mpeg'.format(self._cam_name)
 
         # For debugging only.
-        self._mjpeg_source = "http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg"
+        # self._mjpeg_source = "http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg"
 
         ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-i', self._mjpeg_source, '-f', 'mpeg1video', '-b', '800k', '-r', '30', "pipe:1"]
 

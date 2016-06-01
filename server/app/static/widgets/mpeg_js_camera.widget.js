@@ -7,6 +7,8 @@ var MPEGJSCamera = (function () {
      * @param canvasElement: Canvas element on which we will draw.
      * @param socketIOURL: URL to the Socket IO URL. Namespace must be included.
      * @param camName: Name of the camera.
+     * @param socketIOPath: The specific socketio path. This is used in case the /socket.io endpoint is not located
+     * in the domain's root.
      */
     function MPEGJSCamera(canvasElement, socketIOURL, camName, socketIOPath) {
         this.mFailedFrames = 0; // To track the number of successful frames in this period.

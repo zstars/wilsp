@@ -15,7 +15,8 @@ def index():
 
 @main.route('/exps/imgrefresh/<cam>')
 def exp_imgrefresh(cam):
-    return render_template('exps/camera_image_refresh.html', cam=cam)
+    tfps = request.values.get('tfps', 5)
+    return render_template('exps/camera_image_refresh.html', cam=cam, tfps=tfps)
 
 @main.route('/exps/mjpegnative/<cam>')
 def exp_mjpegnative(cam):

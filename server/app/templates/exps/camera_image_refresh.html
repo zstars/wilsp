@@ -25,7 +25,7 @@
 
 <script type="text/javascript">
     $(document).ready(function(){
-        window.cam = new ImageRefreshCamera($("#theimg")[0], 10);
+        window.cam = new ImageRefreshCamera($("#theimg")[0], {{ tfps }});
         cam.start();
 
         setInterval(function(){

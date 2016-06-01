@@ -21,6 +21,7 @@ def exp_imgrefresh(cam):
 @main.route('/exps/mjpegnative/<cam>')
 def exp_mjpegnative(cam):
     tfps = request.values.get('tfps', 5)
+    tfps = int(tfps)
     return render_template('exps/camera_mjpeg_native.html', cam=cam, tfps=tfps)
 
 @main.route('/exps/mjpegjs/<cam>')
@@ -121,6 +122,7 @@ def cam_mjpeg(cam_id):
     :return:
     """
     tfps = request.values.get("tfps", 5)
+    tfps = int(tfps)
     rotate = request.values.get("rotate", 0)
     REDIS_PREFIX = current_app.config['REDIS_PREFIX']
     # TODO: Not pretty.

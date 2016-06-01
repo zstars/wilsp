@@ -26,7 +26,7 @@ class MPEGFeeder(object):
         # For debugging only.
         # self._mjpeg_source = "http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg"
 
-        ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-i', self._mjpeg_source, '-f', 'mpeg1video', '-b', '800k', '-r', '30', "pipe:1"]
+        ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-f', 'mjpeg', '-i', self._mjpeg_source, '-f', 'mpeg1video', '-b', '800k', '-r', '30', "pipe:1"]
 
         print("Running FFMPEG command: {}".format(ffmpeg_command))
 

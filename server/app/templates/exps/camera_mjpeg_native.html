@@ -25,7 +25,7 @@
 
 <script type="text/javascript">
     $(document).ready(function(){
-        window.cam = new MJPEGNativeCamera($('#theimgdiv')[0], '{{ url_for(".cam_mjpeg", cam_id=cam) }}');
+        window.cam = new MJPEGNativeCamera($('#theimgdiv')[0], '{{ url_for(".cam_mjpeg", cam_id=cam, tfps=tfps) }}');
         cam.start();
 
         setInterval(function(){

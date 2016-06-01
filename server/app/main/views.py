@@ -20,7 +20,8 @@ def exp_imgrefresh(cam):
 
 @main.route('/exps/mjpegnative/<cam>')
 def exp_mjpegnative(cam):
-    return render_template('exps/camera_mjpeg_native.html', cam=cam)
+    tfps = request.values.get('tfps', 5)
+    return render_template('exps/camera_mjpeg_native.html', cam=cam, tfps=tfps)
 
 @main.route('/exps/mjpegjs/<cam>')
 def exp_mjpegjs(cam):
@@ -35,7 +36,7 @@ def exp_mpegjs(cam):
 
 count = 0
 
-def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
+def generator_mjpeg(cam_id, not_available, redis_prefix, rotate, tfps):
     try:
         rotate = float(rotate)
     except ValueError:
@@ -46,7 +47,7 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate):
 
     cam_key = redis_prefix + ":cams:" + cam_id
 
-    target_fps = 30
+    target_fps = tfps
 
     last_frame_start_time = 0
 
@@ -119,11 +120,12 @@ def cam_mjpeg(cam_id):
     :param cam_id:
     :return:
     """
+    tfps = request.values.get("tfps", 5)
     rotate = request.values.get("rotate", 0)
     REDIS_PREFIX = current_app.config['REDIS_PREFIX']
     # TODO: Not pretty.
     not_available = open("app/static/no_image_available.png", "rb").read()
-    return Response(stream_with_context(generator_mjpeg(cam_id, not_available, REDIS_PREFIX, rotate)), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(stream_with_context(generator_mjpeg(cam_id, not_available, REDIS_PREFIX, rotate, tfps)), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 def test_gen(data):
     n = 0

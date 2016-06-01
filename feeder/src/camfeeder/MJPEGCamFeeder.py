@@ -138,6 +138,7 @@ class MJPEGCamFeeder(CamFeeder):
                 raise FrameGrabbingException('No more data received')
             line = rawline.strip()
             line = line.decode('utf-8')
+            line = line.strip('-')
             if len(line) > 0:
                 if line == self._request_response_boundary:
                     break
@@ -172,6 +173,12 @@ class MJPEGCamFeeder(CamFeeder):
                 else:
                     continue
 
+
+            # In some camera versions there is actually a boundary such as (--video boundary--).
+            # We ignore it.
+            if line.strip('-') == self._request_response_boundary:
+                continue
+
             key, val = line.split(':', 1)  # type: str, str
             headers[key.lower()] = val.strip()
         return headers
@@ -205,7 +212,9 @@ class MJPEGCamFeeder(CamFeeder):
         if ctype != 'multipart/x-mixed-replace':
             raise FrameGrabbingException('Response content type is not multipart/x-mixed-replace')
 
-        boundary = boundary.split('=', 1)[1].strip()
+        boundary = boundary.split('=', 1)[1].strip() # type: str
+
+        boundary = boundary.strip('-')  # Some webcams seem to append/preppend non-symetrical dashes, so we just remove them all.
 
         self._request_response_boundary = boundary
         self._request_response = resp

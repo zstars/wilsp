@@ -41,17 +41,21 @@ class SocketIOH264StaticBroadcaster(object):
 
         print("We are serving client {}...".format(self._client_sid))
 
+        # Apparently we must split the data
+
         i = 0
+        splits = self._data.split(b'\x00\x00\x00\x01')
+        print("DATA WAS SPLIT IN {}".format(len(splits)))
         while True:
 
-            if len(self._data) < i*1024 + 1024:
-                i = 0
-                continue
+            for s in splits:
 
-            socketio.emit('stream', self._data[i*1024:i*1024+1024], namespace=SocketIOH264StaticBroadcaster.SOCKETIO_NAMESPACE,
-                          room=self._client_sid)
-            i += 1
+                if len(s) < 4:
+                    continue
 
-            eventlet.sleep(0.1)
+                socketio.emit('stream', b'\x00\x00\x00\x01' + s, namespace=SocketIOH264StaticBroadcaster.SOCKETIO_NAMESPACE,
+                              room=self._client_sid)
+
+                eventlet.sleep(0.1)
 
         print("OUT")

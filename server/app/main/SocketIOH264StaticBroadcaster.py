@@ -1,3 +1,5 @@
+import json
+
 import eventlet
 from eventlet import monkey_patch
 
@@ -42,6 +44,15 @@ class SocketIOH264StaticBroadcaster(object):
         print("We are serving client {}...".format(self._client_sid))
 
         # Apparently we must split the data
+
+        init = {
+            'action': 'init',
+            'width': 640,
+            'height': 480
+        }
+
+        socketio.emit('cmd', json.dumps(init), namespace=SocketIOH264StaticBroadcaster.SOCKETIO_NAMESPACE,
+              room=self._client_sid)
 
         i = 0
         splits = self._data.split(b'\x00\x00\x00\x01')

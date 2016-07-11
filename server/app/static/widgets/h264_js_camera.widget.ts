@@ -77,7 +77,7 @@ class H264JSCamera
             that.mClient.emit('start', {'cam': that.mCamName});
 
 
-            that.mWSAvc = new WSAvcPlayer(that.mCanvasElement, "webgl", 1, 35);
+            that.mWSAvc = new WSAvcPlayer(that.mCanvasElement, "canvas", 1, 35);
             that.mWSAvc.connect(that.mClient);
             // window.wsavc = wsavc;    TODO: Remove this if it proves non-needed.
 

@@ -7,6 +7,7 @@ import redis
 import yaml
 
 # Pre-set the working directory.
+from camfeeder.H264Feeder import H264Feeder
 from camfeeder.ImageRefreshCamFeeder import ImageRefreshCamFeeder
 from camfeeder.MJPEGCamFeeder import MJPEGCamFeeder
 from camfeeder.MPEGFeeder import MPEGFeeder
@@ -67,6 +68,7 @@ def run():
         url = cam.get('img_url')
         mjpeg_url = cam.get('mjpeg_url')
         mpeg = cam.get('mpeg')
+        h264 = cam.get('h264')
 
         if mjpeg_url is not None:
             cf = MJPEGCamFeeder(rdb, REDIS_PREFIX, cam_name, mjpeg_url, 30, rotation)
@@ -74,12 +76,17 @@ def run():
             cf = ImageRefreshCamFeeder(rdb, REDIS_PREFIX, cam_name, url, 30, rotation)
 
         if mjpeg_url is None and url is None:
-            raise Exception("url or mjpeg_url not specified for camera {}".format(cam_name))
+            raise Exception("img_url or mjpeg_url not specified for camera {}".format(cam_name))
 
         if mpeg is not None and mpeg is True:
             mpeg_cf = MPEGFeeder(rdb, cam_name, mjpeg_url)
             cam_feeders[cam_name + '/mpeg'] = mpeg_cf
             mpeg_cf.start()
+
+        if h264 is not None and h264 is True:
+            h264_cf = H264Feeder(rdb, cam_name, mjpeg_url)
+            cam_feeders[cam_name + '/h264'] = h264_cf
+            h264_cf.start()
 
         cam_feeders[cam_name] = cf
         cf.start()

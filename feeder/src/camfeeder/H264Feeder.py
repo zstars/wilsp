@@ -4,10 +4,10 @@ import gevent
 import config
 
 
-class MPEGFeeder(object):
+class H264Feeder(object):
     """
-    The MPEG feeder will control a ffmpeg instance, direct it through stdout pipe, and push it to redis.
-    the stream in REDIS.
+    The H264 feeder will control a ffmpeg instance, direct it through stdout pipe, and push it to redis.
+    the stream in REDIS. An MJPEG source from the webcam is currently REQUIRED.
     """
 
     def __init__(self, rdb, cam_name, mjpeg_source):
@@ -20,12 +20,12 @@ class MPEGFeeder(object):
 
     def _run(self):
         # Redis channel
-        redis_channel = '{}/mpeg'.format(self._cam_name)
+        redis_channel = '{}/h264'.format(self._cam_name)
 
         # For debugging only.
         # self._mjpeg_source = "http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg"
 
-        ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-f', 'mjpeg', '-i', self._mjpeg_source, '-f', 'mpeg1video', '-b', '800k', '-r', '30', "pipe:1"]
+        ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-f', 'mjpeg', '-i', self._mjpeg_source, '-c:v', 'libx264', '-r', '30', "-f", "h264", "pipe:1"]
 
         print("Running FFMPEG command: {}".format(ffmpeg_command))
 
@@ -36,7 +36,7 @@ class MPEGFeeder(object):
             packet = p.stdout.read(2048)
             self._rdb.publish(redis_channel, packet)
 
-        print("MPEG greenlet is OUT")
+        print("H.264 greenlet is OUT")
 
     def start(self):
         g = gevent.Greenlet(self._run)

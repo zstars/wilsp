@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image MJPEG JS View</title>
+
+    <script src="https://code.jquery.com/jquery-2.2.3.min.js"
+        integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<h3>H264 JS View</h3>
+<canvas id="mycanvas" width="640" height="480"></canvas>
+
+<table>
+    <tr>
+        <td>FPS</td>
+        <td id="fpsnum">0</td>
+    </tr>
+    <tr>
+        <td>Failures</td>
+        <td id="ffnum">0</td>
+    </tr>
+    <tr>
+        <td>Success</td>
+        <td id="snum">0</td>
+    </tr>
+</table>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        window.cam = new H264JSCamera($('#mycanvas')[0], location.protocol + '//' + document.domain + ':' + location.port + '/h264', '{{ cam }}', '{{ socketio_path }}');
+        cam.start();
+
+        setInterval(function(){
+            var failedFrames = 0;
+            var renderedFrames = cam.getSuccessfulFrames();
+            var fps = cam.getAverageFPS();
+
+            $("#fpsnum").text(fps);
+            $('#ffnum').text(failedFrames);
+            $('#snum').text(renderedFrames);
+        }, 1000);
+    });
+</script>
+
+
+    <script src="{{ url_for('static', filename='widgets/h264_js_camera.widget.js')}}"></script>
+
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+    <script src="{{ url_for("static", filename='h264test/public/_main.js') }}"></script>
+
+</body>
+</html>

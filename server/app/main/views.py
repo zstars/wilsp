@@ -13,10 +13,12 @@ from . import main
 def index():
     return render_template('base.html')
 
+
 @main.route('/exps/imgrefresh/<cam>')
 def exp_imgrefresh(cam):
     tfps = request.values.get('tfps', 5)
     return render_template('exps/camera_image_refresh.html', cam=cam, tfps=tfps)
+
 
 @main.route('/exps/mjpegnative/<cam>')
 def exp_mjpegnative(cam):
@@ -24,18 +26,28 @@ def exp_mjpegnative(cam):
     tfps = int(tfps)
     return render_template('exps/camera_mjpeg_native.html', cam=cam, tfps=tfps)
 
+
 @main.route('/exps/mjpegjs/<cam>')
 def exp_mjpegjs(cam):
     tfps = request.values.get('tfps', 5)
     path = current_app.config.get('SOCKETIO_PATH', '')
     return render_template('exps/camera_mjpeg_js.html', cam=cam, socketio_path=path, tfps=tfps)
 
+
 @main.route('/exps/mpegjs/<cam>')
 def exp_mpegjs(cam):
     path = current_app.config.get('SOCKETIO_PATH', '')
     return render_template('exps/camera_mpeg_js.html', cam=cam, socketio_path=path)
 
+
+@main.route('/exps/h264js/<cam>')
+def exp_h264js(cam):
+    path = current_app.config.get('SOCKETIO_PATH', '')
+    return render_template('exps/camera_h264_js.html', cam=cam, socketio_path=path)
+
+
 count = 0
+
 
 def generator_mjpeg(cam_id, not_available, redis_prefix, rotate, tfps):
     try:
@@ -110,9 +122,11 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate, tfps):
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
+
 @main.route('/cams/<cam_id>/mpeg')
 def test_mpeg(cam_id):
     return render_template('wsmpeg/mpeg.html')
+
 
 @main.route('/cams/<cam_id>/mjpeg')
 def cam_mjpeg(cam_id):
@@ -127,7 +141,9 @@ def cam_mjpeg(cam_id):
     REDIS_PREFIX = current_app.config['REDIS_PREFIX']
     # TODO: Not pretty.
     not_available = open("app/static/no_image_available.png", "rb").read()
-    return Response(stream_with_context(generator_mjpeg(cam_id, not_available, REDIS_PREFIX, rotate, tfps)), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(stream_with_context(generator_mjpeg(cam_id, not_available, REDIS_PREFIX, rotate, tfps)),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 def test_gen(data):
     n = 0
@@ -135,6 +151,7 @@ def test_gen(data):
         n += 1
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + data + b'\r\n')
+
 
 @main.route('/cams/<cam_id>')
 def cam(cam_id):

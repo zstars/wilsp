@@ -21,7 +21,7 @@ class MPEGJSCamera
     private mFramesRendered : number = 0;
     private mStoppedTime : number; // Time the refresher was stopped, to calc FPS when not active.
 
-    private mJSMPEG : any;
+    private mJSMPEG : any; // Ref. to the decoding library object.
 
 
     /**
@@ -69,6 +69,8 @@ class MPEGJSCamera
 
         let that = this;
         this.mClient = io.connect(this.mSocketIOURL, {path: this.mSocketIOPath});
+        console.debug("Connecting to URL: " + this.mSocketIOURL);
+        console.debug("Connecting to Socket IO Path: " + this.mSocketIOPath);
 		this.mClient.on('connect', function () {
             console.log("Client connected to the server");
             that.mClient.emit('start', {'cam': that.mCamName});

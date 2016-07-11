@@ -1,6 +1,6 @@
 /// <reference path="typedefs/jquery.d.ts" />
 /// <reference path="typedefs/socket.io-client.d.ts" />
-var MPEGJSCamera = (function () {
+var H264JSCamera = (function () {
     /**
      * Creates a Camera object, that will rely on HTML5 Canvas and SocketIO for receiving and rendering
      * a MJPEG stream.
@@ -10,7 +10,7 @@ var MPEGJSCamera = (function () {
      * @param socketIOPath: The specific socketio path. This is used in case the /socket.io endpoint is not located
      * in the domain's root.
      */
-    function MPEGJSCamera(canvasElement, socketIOURL, camName, socketIOPath) {
+    function H264JSCamera(canvasElement, socketIOURL, camName, socketIOPath) {
         this.mFailedFrames = 0; // To track the number of successful frames in this period.
         this.mFramesRendered = 0;
         this.mCanvasElement = canvasElement;
@@ -28,13 +28,13 @@ var MPEGJSCamera = (function () {
     /**
      * Checks whether the camera is currently running.
      */
-    MPEGJSCamera.prototype.isRunning = function () {
+    H264JSCamera.prototype.isRunning = function () {
         return this.mRunning;
     }; // !isRunning
     /**
      * Starts refreshing.
      */
-    MPEGJSCamera.prototype.start = function () {
+    H264JSCamera.prototype.start = function () {
         this.mTimeStarted = Date.now();
         this.mFailedFrames = 0;
         this.mFramesRendered = 0;
@@ -46,14 +46,17 @@ var MPEGJSCamera = (function () {
         this.mClient.on('connect', function () {
             console.log("Client connected to the server");
             that.mClient.emit('start', { 'cam': that.mCamName });
+            that.mWSAvc = new WSAvcPlayer(that.mCanvasElement, "webgl", 1, 35);
+            that.mWSAvc.connect(that.mClient);
+            // window.wsavc = wsavc;    TODO: Remove this if it proves non-needed.
+            // this.mWSAvc.playStream();
         });
-        this.mJSMPEG = new jsmpeg(that.mClient, { canvas: this.mCanvasElement, useSocketIO: true });
     }; // !start
     /**
      * Gets the average FPS during the current active period or the latest period if we are stopped.
      * @returns {number}
      */
-    MPEGJSCamera.prototype.getAverageFPS = function () {
+    H264JSCamera.prototype.getAverageFPS = function () {
         var finalTime;
         if (this.isRunning())
             finalTime = Date.now();
@@ -69,24 +72,26 @@ var MPEGJSCamera = (function () {
     /**
      * Stops refreshing.
      */
-    MPEGJSCamera.prototype.stop = function () {
+    H264JSCamera.prototype.stop = function () {
         this.mRunning = false;
         this.mClient.close();
         this.mStoppedTime = Date.now();
-        this.mJSMPEG.stop();
+        this.mWSAvc.stopStream();
     }; // !stop
     /**
      * Retrieves the number of successful frames in the last active period.
      */
-    MPEGJSCamera.prototype.getSuccessfulFrames = function () {
-        return this.mJSMPEG.framesRendered;
+    H264JSCamera.prototype.getSuccessfulFrames = function () {
+        // TODO: Implement this.
+        return 0;
+        // return this.mJSMPEG.framesRendered;
     };
     /**
      * Retrieves the provided URL but with an added __ts parameter.
      * @param url
      * @returns {string}
      */
-    MPEGJSCamera.getTimestampedURL = function (url) {
+    H264JSCamera.getTimestampedURL = function (url) {
         // Get a random str to prevent cache issues.
         var tsr = Math.random().toString();
         // Not very pretty.
@@ -97,6 +102,6 @@ var MPEGJSCamera = (function () {
             return url + "?__ts=" + tsr;
         }
     }; // !getTimestampedURL
-    return MPEGJSCamera;
+    return H264JSCamera;
 })(); // !Camera
-//# sourceMappingURL=mpeg_js_camera.widget.js.map
+//# sourceMappingURL=h264_js_camera.widget.js.map

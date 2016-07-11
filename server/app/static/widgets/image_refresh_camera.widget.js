@@ -128,5 +128,5 @@ var ImageRefreshCamera = (function () {
         }
     }; // !getTimestampedURL
     return ImageRefreshCamera;
-}()); // !Camera
+})(); // !Camera
 //# sourceMappingURL=image_refresh_camera.widget.js.map

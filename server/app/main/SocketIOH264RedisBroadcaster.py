@@ -1,11 +1,10 @@
+import json
+
 from eventlet import monkey_patch
 
 monkey_patch(all=True)
 
-import struct
-
 from app import socketio, rdb
-from io import BytesIO
 
 
 class SocketIOH264RedisBroadcaster(object):
@@ -23,6 +22,8 @@ class SocketIOH264RedisBroadcaster(object):
     """
 
     SOCKETIO_NAMESPACE = "/h264"
+
+    FRAME_SEPARATOR = b'\x00\x00\x00\x01'
 
     def __init__(self, cam_name, client_sid):
         """
@@ -46,6 +47,17 @@ class SocketIOH264RedisBroadcaster(object):
         print("Subscribed to REDIS channel...")
         print("We are serving client {}...".format(self._client_sid))
 
+        init = {
+            'action': 'init',
+            'width': 640,
+            'height': 480
+        }
+
+        socketio.emit('cmd', json.dumps(init), namespace=SocketIOH264RedisBroadcaster.SOCKETIO_NAMESPACE,
+              room=self._client_sid)
+
+        buffer = bytearray()
+
         while True:
             for item in rchannel.listen():
 
@@ -53,8 +65,19 @@ class SocketIOH264RedisBroadcaster(object):
                 # print('Received: {}'.format(item))
                 if item['type'] == 'message':
                     # print('Emitting {}'.format(repr(item)))
-                    socketio.emit('stream', item['data'], namespace=SocketIOH264RedisBroadcaster.SOCKETIO_NAMESPACE,
-                                  room=self._client_sid)
+                    buffer.extend(item['data'])
+
+                    while True:
+                        # Try to extract a packet.
+                        splits = buffer.split(SocketIOH264RedisBroadcaster.FRAME_SEPARATOR, 1)
+                        if len(splits) < 2:
+                            break
+
+                        packet, buffer = splits[:]
+
+                        # For the H.264 format, the client expects to receive the packets split by \x00\x00\x00\x01.
+                        socketio.emit('stream', SocketIOH264RedisBroadcaster.FRAME_SEPARATOR + packet, namespace=SocketIOH264RedisBroadcaster.SOCKETIO_NAMESPACE,
+                                      room=self._client_sid)
                 else:
                     print("Msg of type: {}".format(item['type']))
                     pass

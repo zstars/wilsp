@@ -63,5 +63,5 @@ def h264_stream_start(data):
     # Start the broadcaster
     # Though there might be some more efficient ways through broadcasting, for now we create a broadcaster greenlet
     # for every client, and we pass it the client_sid so that it can send data to a specific client.
-    t = SocketIOH264StaticBroadcaster(cam, client_sid)
+    t = SocketIOH264RedisBroadcaster(cam, client_sid)
     eventlet.spawn(t.run)

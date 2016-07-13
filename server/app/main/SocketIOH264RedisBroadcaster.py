@@ -47,14 +47,18 @@ class SocketIOH264RedisBroadcaster(object):
         print("Subscribed to REDIS channel...")
         print("We are serving client {}...".format(self._client_sid))
 
-        init = {
-            'action': 'init',
-            'width': 640,
-            'height': 360 # Normally 480
-        }
-
-        socketio.emit('cmd', json.dumps(init), namespace=SocketIOH264RedisBroadcaster.SOCKETIO_NAMESPACE,
-              room=self._client_sid)
+        # NOTE: This is here for reference, and the client still supports canvas initialization, but it is no longer
+        # needed. Now, the player automatically initialises itself with the starting width and height of the
+        # provided Canvas.
+        
+        # init = {
+        #     'action': 'init',
+        #     'width': 640,
+        #     'height': 360 # Normally 480
+        # }
+        #
+        # socketio.emit('cmd', json.dumps(init), namespace=SocketIOH264RedisBroadcaster.SOCKETIO_NAMESPACE,
+        #       room=self._client_sid)
 
         buffer = bytearray()
 

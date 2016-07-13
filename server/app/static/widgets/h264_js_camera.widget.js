@@ -47,6 +47,9 @@ var H264JSCamera = (function () {
             console.log("Client connected to the server");
             that.mClient.emit('start', { 'cam': that.mCamName });
             that.mWSAvc = new WSAvcPlayer(that.mCanvasElement, "webgl", 1, 35);
+            // Force a Canvas initialization. The original player does not do this. Instead, it waits for the
+            // init 'cmd' sent by the server. It should work, though.
+            that.mWSAvc.initCanvas(that.mCanvasElement.width, that.mCanvasElement.height);
             that.mWSAvc.connect(that.mClient);
             // window.wsavc = wsavc;    TODO: Remove this if it proves non-needed.
             // this.mWSAvc.playStream();

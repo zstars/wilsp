@@ -50,7 +50,7 @@ class SocketIOH264RedisBroadcaster(object):
         init = {
             'action': 'init',
             'width': 640,
-            'height': 480
+            'height': 360 # Normally 480
         }
 
         socketio.emit('cmd', json.dumps(init), namespace=SocketIOH264RedisBroadcaster.SOCKETIO_NAMESPACE,

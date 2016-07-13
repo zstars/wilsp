@@ -29,8 +29,13 @@ class H264Feeder(object):
 
         # Interesting command for testing: avconv -r 30 -f mjpeg -i http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg -c:v libx264 -preset:v ultrafast -r 30 -f h264 pipe:1 | ffplay -i -
 
+        # The following command works fine but seems to have a relatively high latency, especially for lower framerates.
+        # Seems to have around 2.2 s delay (with respect to the direct MJPEG stream)
+        # ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-f', 'mjpeg', '-i', self._mjpeg_source, '-c:v', 'libx264', '-preset:v', 'ultrafast', '-r', '5', "-f", "h264", "pipe:1"]
 
-        ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-f', 'mjpeg', '-i', self._mjpeg_source, '-c:v', 'libx264', '-preset:v', 'ultrafast', '-r', '5', "-f", "h264", "pipe:1"]
+        # The following command has a very low latency but is potentially less efficient.
+        # Seems to have around 0.8 seconds delay.
+        ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-f', 'mjpeg', '-i', self._mjpeg_source, '-flags', '+low_delay', '-probesize', '32', '-c:v', 'libx264', '-tune', 'zerolatency', '-preset:v', 'ultrafast', '-r', '5', "-f", "h264", "pipe:1"]
 
         print("Running FFMPEG command: {}".format(ffmpeg_command))
 

@@ -86,22 +86,6 @@ var H264JSCamera = (function () {
         return 0;
         // return this.mJSMPEG.framesRendered;
     };
-    /**
-     * Retrieves the provided URL but with an added __ts parameter.
-     * @param url
-     * @returns {string}
-     */
-    H264JSCamera.getTimestampedURL = function (url) {
-        // Get a random str to prevent cache issues.
-        var tsr = Math.random().toString();
-        // Not very pretty.
-        if (url.search("\\?") != -1) {
-            return url + "&__ts=" + tsr;
-        }
-        else {
-            return url + "?__ts=" + tsr;
-        }
-    }; // !getTimestampedURL
     return H264JSCamera;
 })(); // !Camera
 //# sourceMappingURL=h264_js_camera.widget.js.map

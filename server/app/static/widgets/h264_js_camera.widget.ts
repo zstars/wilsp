@@ -130,22 +130,5 @@ class H264JSCamera
         // return this.mJSMPEG.framesRendered;
     }
 
-    /**
-     * Retrieves the provided URL but with an added __ts parameter.
-     * @param url
-     * @returns {string}
-     */
-    private static getTimestampedURL(url: string): string
-    {
-        // Get a random str to prevent cache issues.
-        let tsr: string = Math.random().toString();
-
-        // Not very pretty.
-        if (url.search("\\?") != -1) {
-            return url + "&__ts=" + tsr;
-        } else {
-            return url + "?__ts=" + tsr;
-        }
-    } // !getTimestampedURL
 
 } // !Camera

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-import gevent
+import eventlet
 import io
 import redis
 import time
@@ -23,7 +23,7 @@ class CamFeeder(object):
 
     def __init__(self, rdb: redis.StrictRedis, redis_prefix: str, cam_name: str, url: str, max_fps: int,
                  rotation: float = None):
-        self._g = []  # type: [gevent.Greenlet]
+        self._g = []  # type: [eventlet.greenthread.GreenThread]
         self._rdb = rdb  # type: redis.StrictRedis
         self._redis_prefix = redis_prefix
         self._url = url
@@ -53,27 +53,25 @@ class CamFeeder(object):
         Starts running the greenlet.
         :return:
         """
-        g = gevent.Greenlet(self._run)
-        g.start()
+        g = eventlet.spawn(self._run)
         self._g.append(g)
 
         # Start the stats pusher as well.
-        g = gevent.Greenlet(self._run_stats_greenlet)
-        g.start()
+        g = eventlet.spawn(self._run_stats_greenthread)
         self._g.append(g)
 
     ########################################################
     # PRIVATE API
     ########################################################
 
-    def _run_stats_greenlet(self) -> None:
+    def _run_stats_greenthread(self) -> None:
         """
         Calls every so often the '_push_stats' method.
         :return:
         """
         while True:
             self._push_stats()
-            gevent.sleep(CamFeeder.STATS_PUSH_WAIT)
+            eventlet.sleep(CamFeeder.STATS_PUSH_WAIT)
 
     def _push_stats(self) -> None:
         """

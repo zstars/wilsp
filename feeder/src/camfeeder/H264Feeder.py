@@ -1,7 +1,6 @@
 import subprocess
 
 import eventlet
-import gevent
 
 import config
 
@@ -80,6 +79,5 @@ class H264Feeder(object):
         print("H.264 greenlet is OUT")
 
     def start(self):
-        g = gevent.Greenlet(self._run)
-        g.start()
+        g = eventlet.spawn(self._run)
         self._g.append(g)

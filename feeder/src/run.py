@@ -2,9 +2,10 @@ import os
 import signal
 import sys
 
-import gevent
 import redis
 import yaml
+
+import eventlet
 
 # Pre-set the working directory.
 from camfeeder.H264Feeder import H264Feeder
@@ -24,7 +25,7 @@ REDIS_PORT = 6379
 REDIS_DB = 0
 
 cam_feeders = {}
-greenlets = []
+greenthreads = []
 
 
 def signal_handler(signal, frame):
@@ -40,7 +41,7 @@ def watchdog(rdb):
     """
     while True:
         rdb.setex(REDIS_PREFIX + ":feeder:alive", 5, True)
-        gevent.sleep(2)
+        eventlet.sleep(2)
 
 
 def run():
@@ -92,18 +93,19 @@ def run():
         cf.start()
 
     # Create the watchdog
-    g = gevent.spawn(watchdog, rdb)
-    greenlets.append(g)
+    g = eventlet.spawn(watchdog, rdb)
+    greenthreads.append(g)
 
     # Wait for all the greenlets
-    cam_feeder_greenlets_lists = [cam._g for cam in cam_feeders.values()]
+    cam_feeder_greenthreads_list = [cam._g for cam in cam_feeders.values()]
 
-    for cam_feeder_greenlets in cam_feeder_greenlets_lists:
-        greenlets.extend(cam_feeder_greenlets)
+    for cam_feeder_greenthreads in cam_feeder_greenthreads_list:
+        greenthreads.extend(cam_feeder_greenthreads)
 
 
 if __name__ == '__main__':
     run()
 
     # Wait for greenlets
-    gevent.joinall(greenlets)
+    for g in greenthreads:
+        g.wait()

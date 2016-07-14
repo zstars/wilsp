@@ -1,6 +1,5 @@
 import subprocess
-import gevent
-
+import eventlet
 import config
 
 
@@ -39,6 +38,5 @@ class MPEGFeeder(object):
         print("MPEG greenlet is OUT")
 
     def start(self):
-        g = gevent.Greenlet(self._run)
-        g.start()
+        g = eventlet.spawn(self._run)
         self._g.append(g)

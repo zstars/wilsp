@@ -1,4 +1,4 @@
-import gevent
+import eventlet
 import grequests
 import redis
 import requests
@@ -54,8 +54,8 @@ class MJPEGCamFeeder(CamFeeder):
 
         base_key = "{}:cams:{}:stats:".format(self._redis_prefix, self._cam_name)
 
-        self._rdb.setex(base_key + 'cycle_live_control_restablish', CamFeeder.IMAGE_EXPIRE_TIME * 3, self._stats_live_control_restablish)
-
+        self._rdb.setex(base_key + 'cycle_live_control_restablish', CamFeeder.IMAGE_EXPIRE_TIME * 3,
+                        self._stats_live_control_restablish)
 
     def _run_until_inactive(self):
         """
@@ -70,7 +70,7 @@ class MJPEGCamFeeder(CamFeeder):
 
             # We cannot control the rate client-side (it is set by the remote webcam) so we have to read
             # as fast as possible.
-            gevent.sleep(0)
+            eventlet.sleep(0)
 
             self._check_active()
 
@@ -82,7 +82,7 @@ class MJPEGCamFeeder(CamFeeder):
                     self._start_streaming_request()
                 except Exception as ex:
                     print("Failed to start_streaming request. Cause: {}".format(ex))
-                    gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
+                    eventlet.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                     continue
 
                 # Keep track that we have just established a new connection, so that we store the date in the next
@@ -105,7 +105,7 @@ class MJPEGCamFeeder(CamFeeder):
             except Exception as ex:
                 print("Restarting connection. Cause: {}".format(ex))
                 self._request_response = None
-                gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
+                eventlet.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                 continue
 
     def _parse_next_image(self) -> (bytes, int):
@@ -128,7 +128,7 @@ class MJPEGCamFeeder(CamFeeder):
         image = self._request_response.raw.read(content_length)
         if len(image) != content_length:
             raise FrameGrabbingException(
-                'Unexpected length of retrieved image. Expected {} got {}.'.format(content_length, len(image)))
+                    'Unexpected length of retrieved image. Expected {} got {}.'.format(content_length, len(image)))
 
         # Now skip until the boundary is reached.
         while True:
@@ -173,7 +173,6 @@ class MJPEGCamFeeder(CamFeeder):
                 else:
                     continue
 
-
             # In some camera versions there is actually a boundary such as (--video boundary--).
             # We ignore it.
             if line.strip('-') == self._request_response_boundary:
@@ -212,9 +211,10 @@ class MJPEGCamFeeder(CamFeeder):
         if ctype != 'multipart/x-mixed-replace':
             raise FrameGrabbingException('Response content type is not multipart/x-mixed-replace')
 
-        boundary = boundary.split('=', 1)[1].strip() # type: str
+        boundary = boundary.split('=', 1)[1].strip()  # type: str
 
-        boundary = boundary.strip('-')  # Some webcams seem to append/preppend non-symetrical dashes, so we just remove them all.
+        boundary = boundary.strip(
+            '-')  # Some webcams seem to append/preppend non-symetrical dashes, so we just remove them all.
 
         self._request_response_boundary = boundary
         self._request_response = resp

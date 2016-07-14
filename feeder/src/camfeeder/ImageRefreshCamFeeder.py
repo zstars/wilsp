@@ -1,5 +1,5 @@
-import gevent
-import grequests
+import eventlet
+import erequests
 import redis
 import time
 
@@ -49,9 +49,9 @@ class ImageRefreshCamFeeder(CamFeeder):
             if time_left < 0:
                 # We are simply not managing to keep up with the intended frame rate, but for this
                 # cam feeder, that is not a (big) problem.
-                gevent.sleep(0)
+                eventlet.sleep(0)
             else:
-                gevent.sleep(time_left)
+                eventlet.sleep(time_left)
 
     def _grab_frame(self) -> bytes:
         """
@@ -59,8 +59,8 @@ class ImageRefreshCamFeeder(CamFeeder):
         :return:
         """
         try:
-            rs = [grequests.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)]
-            r = grequests.map(rs)[0]
+            rs = [erequests.async.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)]
+            r = erequests.map(rs)[0]
             if r.status_code != 200:
                 raise FrameGrabbingException("Status code is not 200")
             content = r.content

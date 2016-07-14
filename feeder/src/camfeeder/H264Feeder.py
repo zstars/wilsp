@@ -35,7 +35,9 @@ class H264Feeder(object):
 
         # The following command has a very low latency but is potentially less efficient.
         # Seems to have around 0.8 seconds delay.
-        ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-f', 'mjpeg', '-i', self._mjpeg_source, '-flags', '+low_delay', '-probesize', '32', '-c:v', 'libx264', '-tune', 'zerolatency', '-preset:v', 'ultrafast', '-r', '5', "-f", "h264", "pipe:1"]
+        ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-f', 'mjpeg', '-i', self._mjpeg_source, '-flags', '+low_delay',
+                          '-probesize', '32', '-c:v', 'libx264', '-tune', 'zerolatency', '-preset:v', 'ultrafast', '-r',
+                          '5', "-f", "h264", "-b:v", "100k", "pipe:1"]
 
         print("Running FFMPEG command: {}".format(ffmpeg_command))
 

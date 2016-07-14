@@ -1,9 +1,8 @@
 import unittest
 import gevent
 
-from FeederTest import FeederTest
 import run
-from FeederTestBase import FeederTestBase
+from .FeederTestBase import FeederTestBase
 
 from run import REDIS_PREFIX
 

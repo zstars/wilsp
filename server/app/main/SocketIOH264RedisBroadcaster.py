@@ -50,7 +50,7 @@ class SocketIOH264RedisBroadcaster(object):
         # NOTE: This is here for reference, and the client still supports canvas initialization, but it is no longer
         # needed. Now, the player automatically initialises itself with the starting width and height of the
         # provided Canvas.
-        
+
         # init = {
         #     'action': 'init',
         #     'width': 640,

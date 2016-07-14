@@ -59,8 +59,8 @@ class ImageRefreshCamFeeder(CamFeeder):
         :return:
         """
         try:
-            rs = [erequests.async.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)]
-            r = erequests.map(rs)[0]
+            req = erequests.async.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)
+            r = req.send()
             if r.status_code != 200:
                 raise FrameGrabbingException("Status code is not 200")
             content = r.content

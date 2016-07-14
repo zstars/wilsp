@@ -103,7 +103,7 @@ class CamFeeder(object):
         while not self._active:
             self._check_active()
             if not self._active:
-                gevent.sleep(CamFeeder.SLEEP_WHEN_INACTIVE)
+                eventlet.sleep(CamFeeder.SLEEP_WHEN_INACTIVE)
 
     def _run(self) -> None:
         """

@@ -30,8 +30,8 @@ class TestBasic(FeederTestBase):
         self.rdb = mock_strict_redis_client()
         self.cf = MJPEGCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.mjpg', 10, 0)
 
-        # We mock grequests.get calls.
-        self.get_patcher = patch('grequests.get')
+        # We mock erequests.async.get calls.
+        self.get_patcher = patch('erequests.async.get')
         self.get_mock = self.get_patcher.start()
         self.addCleanup(self.get_patcher.stop)
 
@@ -39,7 +39,7 @@ class TestBasic(FeederTestBase):
         fixed_response.status_code = 200
         fixed_response.headers['content-type'] = 'multipart/x-mixed-replace;boundary=--video boundary--'
         fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
-        type(self.get_mock.return_value.send.return_value).response = PropertyMock(return_value=fixed_response)
+        self.get_mock.return_value.send.return_value = fixed_response
 
         # Advanced DARK MAGICKS. Would be nice to find a less contrived way to do this.
         # response_intra_mock = MagicMock()
@@ -49,7 +49,7 @@ class TestBasic(FeederTestBase):
     def test_mocking_scheme(self):
 
         idx = 0
-        for idx, line in enumerate(erequests.async.get().send().response.iter_lines()):
+        for idx, line in enumerate(erequests.async.get('oo').send().iter_lines()):
             self.assertIsNotNone(line)
 
         self.assertGreater(idx, 0)
@@ -57,7 +57,8 @@ class TestBasic(FeederTestBase):
     def test_start_streaming_request(self):
         self.cf._start_streaming_request()
         self.assertIsNotNone(self.cf._request_response_boundary)
-        self.assertEquals('--video boundary--', self.cf._request_response_boundary)
+        # After the latest changes we expect the boundary to be without dashes (--).
+        self.assertEquals('video boundary', self.cf._request_response_boundary)
 
     def test_start_streaming_request_does_not_change_if_fails(self):
         """
@@ -65,7 +66,7 @@ class TestBasic(FeederTestBase):
         :return:
         """
         self.assertIsNone(self.cf._request_response)
-        type(self.get_mock.return_value.send.return_value).response.headers['content-type'] = 'multipart/x-mixed-replace'
+        self.get_mock.return_value.send.return_value.headers['content-type'] = 'multipart/x-mixed-replace'
 
         try:
             self.cf._start_streaming_request()
@@ -138,7 +139,7 @@ class TestRun(FeederTestBase):
         fixed_response.status_code = 200
         fixed_response.headers['content-type'] = 'multipart/x-mixed-replace;boundary=--video boundary--'
         fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
-        type(self.get_mock.return_value.send.return_value).response = PropertyMock(return_value=fixed_response)
+        self.get_mock.return_value.send.return_value = fixed_response
 
         # Start running the greenlet.
         self.cf.start()
@@ -192,7 +193,7 @@ class TestRunRegressions(FeederTestBase):
         fixed_response.status_code = 200
         fixed_response.headers['content-type'] = 'multipart/x-mixed-replace;boundary=--video boundary--'
         fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
-        type(self.get_mock.return_value.send.return_value).response = PropertyMock(return_value=fixed_response)
+        self.get_mock.return_value.send.return_value = fixed_response
 
         # Start running the greenlet.
         self.cf.start()

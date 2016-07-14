@@ -194,8 +194,7 @@ class MJPEGCamFeeder(CamFeeder):
         :return:
         """
         r = erequests.async.get(self._url, stream=True)
-        ar = r.send()
-        resp = ar.response  # type: requests.Response
+        resp = r.send() # type: requests.Response
         if resp.status_code != 200:
             raise FrameGrabbingException('Unexpected response: not 200')
 

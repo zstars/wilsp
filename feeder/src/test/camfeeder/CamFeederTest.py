@@ -1,7 +1,7 @@
 import os
 import hashlib
 
-import gevent
+import eventlet
 import redis
 import time
 from mockredis import mock_strict_redis_client
@@ -180,4 +180,4 @@ class TestRun(FeederTestBase):
 
     def tearDown(self):
         for g in self._g:
-            gevent.kill(g)
+            eventlet.kill(g)

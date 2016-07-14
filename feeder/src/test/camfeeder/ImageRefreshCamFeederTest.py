@@ -2,7 +2,7 @@ import io
 import os
 from unittest.mock import patch
 
-import gevent
+import eventlet
 import requests
 from mockredis import mock_strict_redis_client
 
@@ -128,13 +128,13 @@ class TestRun(FeederTestBase):
 
         # Should activate
         self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
-        gevent.sleep(0.1)
+        eventlet.sleep(0.1)
 
         # Get current number of frames
         frames_first = self.cf._frames_this_cycle
 
         # Let it run
-        gevent.sleep(0.1)
+        eventlet.sleep(0.1)
 
         # Ensure that the number of frames has incrased
         frames_second = self.cf._frames_this_cycle
@@ -148,4 +148,4 @@ class TestRun(FeederTestBase):
 
     def tearDown(self):
         for g in self._g:
-            gevent.kill(g)
+            eventlet.kill(g)

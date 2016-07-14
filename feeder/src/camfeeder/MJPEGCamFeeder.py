@@ -1,8 +1,8 @@
 import eventlet
-import grequests
 import redis
 import requests
 import time
+import erequests
 from dateutil.parser import parse
 
 from camfeeder.CamFeeder import CamFeeder
@@ -193,7 +193,7 @@ class MJPEGCamFeeder(CamFeeder):
         unless the start was apparently successful.
         :return:
         """
-        r = grequests.get(self._url, stream=True)
+        r = erequests.async.get(self._url, stream=True)
         ar = r.send()
         resp = ar.response  # type: requests.Response
         if resp.status_code != 200:

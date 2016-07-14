@@ -2,8 +2,8 @@ import io
 import os
 from unittest.mock import patch, MagicMock, PropertyMock
 
-import gevent
-import grequests
+import eventlet
+import erequests
 import requests
 from PIL import Image
 from mockredis import mock_strict_redis_client
@@ -49,7 +49,7 @@ class TestBasic(FeederTestBase):
     def test_mocking_scheme(self):
 
         idx = 0
-        for idx, line in enumerate(grequests.get().send().response.iter_lines()):
+        for idx, line in enumerate(erequests.async.get().send().response.iter_lines()):
             self.assertIsNotNone(line)
 
         self.assertGreater(idx, 0)
@@ -122,7 +122,7 @@ class TestBasic(FeederTestBase):
 
 class TestRun(FeederTestBase):
     """
-    Tests by letting the gevent greenlets run.
+    Tests by letting the greenthreads run.
     """
 
     def setUp(self):
@@ -130,7 +130,7 @@ class TestRun(FeederTestBase):
         self.cf = MJPEGCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.mjpg', 10000, 0)
 
         # We mock grequests.get calls.
-        self.get_patcher = patch('grequests.get')
+        self.get_patcher = patch('erequests.async.get')
         self.get_mock = self.get_patcher.start()
         self.addCleanup(self.get_patcher.stop)
 
@@ -158,7 +158,7 @@ class TestRun(FeederTestBase):
     def test_flow(self):
         # Should activate
         self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
-        gevent.sleep(0.2)
+        eventlet.sleep(0.2)
 
         # Get current number of frames
         frames = self.cf._frames_this_cycle
@@ -171,7 +171,7 @@ class TestRun(FeederTestBase):
 
     def tearDown(self):
         for g in self._g:
-            gevent.kill(g)
+            eventlet.kill(g)
 
 
 class TestRunRegressions(FeederTestBase):
@@ -184,7 +184,7 @@ class TestRunRegressions(FeederTestBase):
         self.cf = MJPEGCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.mjpg', 10000, 0)
 
         # We mock grequests.get calls.
-        self.get_patcher = patch('grequests.get')
+        self.get_patcher = patch('erequests.async.get')
         self.get_mock = self.get_patcher.start()
         self.addCleanup(self.get_patcher.stop)
 
@@ -207,8 +207,8 @@ class TestRunRegressions(FeederTestBase):
 
         # Should activate
         self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
-        gevent.sleep(0.4)
+        eventlet.sleep(0.4)
 
     def tearDown(self):
         for g in self._g:
-            gevent.kill(g)
+            eventlet.kill(g)

@@ -1,5 +1,5 @@
 import unittest
-import gevent
+import eventlet
 
 import run
 from .FeederTestBase import FeederTestBase
@@ -23,7 +23,7 @@ class TestWatchdog(FeederTestBase):
         Test that after working for some time, the watchdog is set.
         :return:
         """
-        gevent.sleep(2)
+        eventlet.sleep(2)
 
         alive = self.rdb.get('{0}:feeder:alive'.format(REDIS_PREFIX))
         self.assertIsNotNone(alive)
@@ -36,13 +36,13 @@ class TestWatchdog(FeederTestBase):
         for g in run.greenlets: # type: gevent.Greenlet
             g.kill()
 
-        gevent.sleep(6)
+        eventlet.sleep(6)
 
         alive = self.rdb.get('{0}:feeder:alive'.format(REDIS_PREFIX))
         self.assertIsNone(alive)
 
 
-class TestFrames(FeederTest):
+class TestFrames(FeederTestBase):
 
     def setUp(self):
         run.run()  # This starts running the greenlets but does not block.
@@ -58,7 +58,7 @@ class TestFrames(FeederTest):
         Test that after working for some time, the watchdog is set.
         :return:
         """
-        gevent.sleep(2)
+        eventlet.sleep(2)
 
         a1 = self.rdb.get('{0}:cams:archimedes1:lastframe'.format(REDIS_PREFIX))
         self.assertIsNotNone(a1)
@@ -70,12 +70,12 @@ class TestFrames(FeederTest):
         Test that after working for some time, the frames disappear.
         :return:
         """
-        gevent.sleep(2)
+        eventlet.sleep(2)
 
         for g in run.greenlets: # type: gevent.Greenlet
             g.kill()
 
-        gevent.sleep(11)
+        eventlet.sleep(11)
 
         a1 = self.rdb.get('{0}:cams:archimedes1:lastframe'.format(REDIS_PREFIX))
         self.assertIsNone(a1)

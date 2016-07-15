@@ -150,7 +150,7 @@ class MJPEGCamFeeder(CamFeeder):
         timestamp = headers.get('x-timestamp')  # For other models of webcam
 
         if date is None and timestamp is None:
-            raise FrameGrabbingException('No date or x-timestamp header received')
+            raise FrameGrabbingException('No date or x-timestamp header received. Headers present are: {}'.format(repr(headers)))
 
         # TODO: This will support a very limited number of formats.
         if date is not None:  # DCS-932L webcams have a date header. With minor variations depending on the firmware version.
@@ -203,7 +203,8 @@ class MJPEGCamFeeder(CamFeeder):
         r = erequests.async.get(self._url, stream=True)
         resp = r.send() # type: requests.Response
         if resp.status_code != 200:
-            raise FrameGrabbingException('Unexpected response: not 200')
+            content = resp.content
+            raise FrameGrabbingException('Unexpected response: not 200. Content was: ' + content)
 
         headers = resp.headers
         content_type = headers['content-type']

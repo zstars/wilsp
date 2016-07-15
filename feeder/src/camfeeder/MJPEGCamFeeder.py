@@ -146,17 +146,17 @@ class MJPEGCamFeeder(CamFeeder):
                 else:
                     raise FrameGrabbingException('Did not find expected boundary: ', line)
 
-        date = headers.get('date') # For some models of webcam
-        timestamp = headers.get('x-timestamp') # For other models of webcam
+        date = headers.get('date')  # For some models of webcam
+        timestamp = headers.get('x-timestamp')  # For other models of webcam
 
         if date is None and timestamp is None:
             raise FrameGrabbingException('No date or x-timestamp header received')
 
         # TODO: This will support a very limited number of formats.
-        if date is not None: # DCS-932L webcams have a date header. With minor variations depending on the firmware version.
+        if date is not None:  # DCS-932L webcams have a date header. With minor variations depending on the firmware version.
             date = str.join(' ', date.split(' ')[:3])
             date = parse(date, fuzzy=True)
-        else: # DCS 2230L webcams have quite a few parameters. Among them, a x-timestamp header with a millisecond-level timestamp.
+        else:  # DCS 2230L webcams have quite a few parameters. Among them, a x-timestamp header with a millisecond-level timestamp.
             timestamp = float(timestamp) / 1000.0
             date = datetime.datetime.utcfromtimestamp(timestamp)
 

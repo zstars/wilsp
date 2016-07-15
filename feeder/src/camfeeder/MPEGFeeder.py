@@ -1,6 +1,7 @@
 import subprocess
 import eventlet
 import config
+from eventlet import tpool
 
 
 class MPEGFeeder(object):
@@ -28,12 +29,17 @@ class MPEGFeeder(object):
 
         print("Running FFMPEG command: {}".format(ffmpeg_command))
 
-        p = subprocess.Popen(ffmpeg_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        # Eventlet cannot "greenify" subprocess, so we will run it in a different thread through an eventlet threadpool.
 
-        while True:
-            # TODO: Consider whether we should read in some other way.
-            packet = p.stdout.read(2048)
-            self._rdb.publish(redis_channel, packet)
+        def run_ffmpeg():
+            p = subprocess.Popen(ffmpeg_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+            while True:
+                # TODO: Consider whether we should read in some other way.
+                packet = p.stdout.read(2048)
+                self._rdb.publish(redis_channel, packet)
+
+        tpool.execute(run_ffmpeg)
 
         print("MPEG greenlet is OUT")
 

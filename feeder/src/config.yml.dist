@@ -1,2 +1,2 @@
 
-FFMPEG_BIN = '/opt/local/bin/ffmpeg'
+FFMPEG_BIN: '/opt/local/bin/ffmpeg'

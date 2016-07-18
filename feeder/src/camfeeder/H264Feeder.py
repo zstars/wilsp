@@ -1,6 +1,6 @@
 import subprocess
 import eventlet
-import config
+import time
 from eventlet import tpool
 
 
@@ -10,13 +10,13 @@ class H264Feeder(object):
     the stream in REDIS. An MJPEG source from the webcam is currently REQUIRED.
     """
 
-    def __init__(self, rdb, cam_name, mjpeg_source):
+    def __init__(self, rdb, cam_name, mjpeg_source, ffmpeg_bin):
         self._g = []
         self._cam_name = cam_name
         self._mjpeg_source = mjpeg_source
         self._rdb = rdb
 
-        self._ffmpeg_bin = config.FFMPEG_BIN
+        self._ffmpeg_bin = ffmpeg_bin
 
     def _run(self):
         # Redis channel
@@ -58,27 +58,20 @@ class H264Feeder(object):
             # self._data = open("/tmp/gen.h264", "rb").read()
             i = 0
 
-            dbgo = open("/tmp/dout.h264", "wb")
 
             while True:
                 # TODO: Consider whether we should read in some other way.
-                packet = p.stdout.read(2048)
-
-                # For debugging purposes
-                dbgo.write(packet)
-
-                # if i*1024+1024 >= len(self._data):
-                #     i = 0
-                # packet = self._data[i*1024:i*1024+1024]
-                # i += 1
-
-                # It is noteworthy that, as of now, the packets are a stream. An alternative would be to split the frames
-                # here. This is more efficient from a networking perspective, but it probably transfers some work
-                # to the Redis listeners.
-                self._rdb.publish(redis_channel, packet)
-
-                # eventlet.sleep(0.01)
-
+                try:
+                    packet = p.stdout.read(2048)
+                    if len(packet) > 0:
+                        # It is noteworthy that, as of now, the packets are a stream. An alternative would be to split the frames
+                        # here. This is more efficient from a networking perspective, but it probably transfers some work
+                        # to the Redis listeners.
+                        self._rdb.publish(redis_channel, packet)
+                    else:
+                        time.sleep(0.05)
+                except ValueError as ex:
+                    return 1
 
         tpool.execute(run_ffmpeg)
 

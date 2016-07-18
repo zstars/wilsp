@@ -1,6 +1,7 @@
 import subprocess
 import eventlet
-import config
+import time
+
 from eventlet import tpool
 
 
@@ -10,13 +11,12 @@ class MPEGFeeder(object):
     the stream in REDIS.
     """
 
-    def __init__(self, rdb, cam_name, mjpeg_source):
+    def __init__(self, rdb, cam_name, mjpeg_source, ffmpeg_bin):
         self._g = []
         self._cam_name = cam_name
         self._mjpeg_source = mjpeg_source
         self._rdb = rdb
-
-        self._ffmpeg_bin = config.FFMPEG_BIN
+        self._ffmpeg_bin = ffmpeg_bin
 
     def _run(self):
         # Redis channel
@@ -36,8 +36,15 @@ class MPEGFeeder(object):
 
             while True:
                 # TODO: Consider whether we should read in some other way.
-                packet = p.stdout.read(2048)
-                self._rdb.publish(redis_channel, packet)
+
+                try:
+                    packet = p.stdout.read(2048)
+                    if len(packet) > 0:
+                        self._rdb.publish(redis_channel, packet)
+                    else:
+                        return 2
+                except ValueError as ex:
+                    return 1
 
         tpool.execute(run_ffmpeg)
 

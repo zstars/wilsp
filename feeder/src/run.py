@@ -19,6 +19,7 @@ os.chdir(dname)
 
 
 CAMS_FILE = '../../cams.yml'
+CONFIG_FILE = '../../config.yml'
 REDIS_PREFIX = 'wilsa'
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
@@ -55,6 +56,9 @@ def run():
     data = yaml.load(open(CAMS_FILE, 'r'))
     cams = data['cams']  # type: dict
 
+    # Load the basic configuration
+    config = yaml.load(open(CONFIG_FILE, 'r'))
+
     # Connect to the redis instance
     rdb = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True)
 
@@ -80,12 +84,12 @@ def run():
             raise Exception("img_url or mjpeg_url not specified for camera {}".format(cam_name))
 
         if mpeg is not None and mpeg is True:
-            mpeg_cf = MPEGFeeder(rdb, cam_name, mjpeg_url)
+            mpeg_cf = MPEGFeeder(rdb, cam_name, mjpeg_url, config.get('FFMPEG_BIN'))
             cam_feeders[cam_name + '/mpeg'] = mpeg_cf
             mpeg_cf.start()
 
         if h264 is not None and h264 is True:
-            h264_cf = H264Feeder(rdb, cam_name, mjpeg_url)
+            h264_cf = H264Feeder(rdb, cam_name, mjpeg_url, config.get('FFMPEG_BIN'))
             cam_feeders[cam_name + '/h264'] = h264_cf
             h264_cf.start()
 

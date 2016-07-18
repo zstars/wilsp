@@ -69,7 +69,7 @@ class H264Feeder(object):
                         # to the Redis listeners.
                         self._rdb.publish(redis_channel, packet)
                     else:
-                        time.sleep(0.05)
+                        return 2
                 except ValueError as ex:
                     return 1
 

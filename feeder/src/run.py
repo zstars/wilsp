@@ -19,7 +19,7 @@ os.chdir(dname)
 
 
 CAMS_FILE = '../../cams.yml'
-CONFIG_FILE = '../../config.yml'
+CONFIG_FILE = 'config.yml'
 REDIS_PREFIX = 'wilsa'
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379

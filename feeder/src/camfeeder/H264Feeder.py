@@ -1,6 +1,5 @@
 import subprocess
 import eventlet
-import time
 from eventlet import tpool
 
 

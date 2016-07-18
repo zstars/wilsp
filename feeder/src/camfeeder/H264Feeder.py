@@ -62,12 +62,13 @@ class H264Feeder(object):
                 # TODO: Consider whether we should read in some other way.
                 try:
                     packet = p.stdout.read(2048)
-                    if len(packet) > 0:
+                    n = len(packet)
+                    if n > 0:
                         # It is noteworthy that, as of now, the packets are a stream. An alternative would be to split the frames
                         # here. This is more efficient from a networking perspective, but it probably transfers some work
                         # to the Redis listeners.
                         self._rdb.publish(redis_channel, packet)
-                    else:
+                    elif n != 2048:
                         return 2
                 except ValueError as ex:
                     return 1

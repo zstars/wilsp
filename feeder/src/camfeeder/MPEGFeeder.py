@@ -38,9 +38,10 @@ class MPEGFeeder(object):
 
                 try:
                     packet = p.stdout.read(2048)
+                    n = len(packet)
                     if len(packet) > 0:
                         self._rdb.publish(redis_channel, packet)
-                    else:
+                    elif n != 2048:
                         return 2
                 except ValueError as ex:
                     return 1

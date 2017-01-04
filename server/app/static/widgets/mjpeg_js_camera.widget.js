@@ -125,5 +125,5 @@ var MJPEGJSCamera = (function () {
         }
     }; // !getTimestampedURL
     return MJPEGJSCamera;
-}()); // !Camera
+})(); // !Camera
 //# sourceMappingURL=mjpeg_js_camera.widget.js.map

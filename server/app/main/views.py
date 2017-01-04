@@ -14,33 +14,33 @@ def index():
     return render_template('base.html')
 
 
-@main.route('/exps/imgrefresh/<cam>')
+@main.route('/cams/exps/imgrefresh/<cam>')
 def exp_imgrefresh(cam):
     tfps = request.values.get('tfps', 5)
     return render_template('exps/camera_image_refresh.html', cam=cam, tfps=tfps)
 
 
-@main.route('/exps/mjpegnative/<cam>')
+@main.route('/cams/exps/mjpegnative/<cam>')
 def exp_mjpegnative(cam):
     tfps = request.values.get('tfps', 5)
     tfps = int(tfps)
     return render_template('exps/camera_mjpeg_native.html', cam=cam, tfps=tfps)
 
 
-@main.route('/exps/mjpegjs/<cam>')
+@main.route('/cams/exps/mjpegjs/<cam>')
 def exp_mjpegjs(cam):
     tfps = request.values.get('tfps', 5)
     path = current_app.config.get('SOCKETIO_PATH', '')
     return render_template('exps/camera_mjpeg_js.html', cam=cam, socketio_path=path, tfps=tfps)
 
 
-@main.route('/exps/mpegjs/<cam>')
+@main.route('/cams/exps/mpegjs/<cam>')
 def exp_mpegjs(cam):
     path = current_app.config.get('SOCKETIO_PATH', '')
     return render_template('exps/camera_mpeg_js.html', cam=cam, socketio_path=path)
 
 
-@main.route('/exps/h264js/<cam>')
+@main.route('/cams/exps/h264js/<cam>')
 def exp_h264js(cam):
     path = current_app.config.get('SOCKETIO_PATH', '')
     return render_template('exps/camera_h264_js.html', cam=cam, socketio_path=path)

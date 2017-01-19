@@ -1,12 +1,12 @@
 import datetime
-import eventlet
+import gevent
 import redis
 import requests
 import time
-import erequests
+import grequests
 from dateutil.parser import parse
 
-from camfeeder.CamFeeder import CamFeeder
+from feeder.CamFeeder import CamFeeder
 
 
 class FrameGrabbingException(Exception):
@@ -71,7 +71,7 @@ class MJPEGCamFeeder(CamFeeder):
 
             # We cannot control the rate client-side (it is set by the remote webcam) so we have to read
             # as fast as possible.
-            eventlet.sleep(0)
+            gevent.sleep(0)
 
             self._check_active()
 
@@ -83,7 +83,7 @@ class MJPEGCamFeeder(CamFeeder):
                     self._start_streaming_request()
                 except Exception as ex:
                     print("Failed to start_streaming request. Cause: {}".format(ex))
-                    eventlet.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
+                    gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                     continue
 
                 # Keep track that we have just established a new connection, so that we store the date in the next
@@ -106,7 +106,7 @@ class MJPEGCamFeeder(CamFeeder):
             except Exception as ex:
                 print("Restarting connection. Cause: {}".format(ex))
                 self._request_response = None
-                eventlet.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
+                gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                 continue
 
     def _parse_next_image(self) -> (bytes, int):
@@ -200,7 +200,7 @@ class MJPEGCamFeeder(CamFeeder):
         unless the start was apparently successful.
         :return:
         """
-        r = erequests.async.get(self._url, stream=True)
+        r = grequests.async.get(self._url, stream=True)
         resp = r.send() # type: requests.Response
         if resp.status_code != 200:
             content = resp.content

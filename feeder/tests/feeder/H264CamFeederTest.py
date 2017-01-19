@@ -3,8 +3,8 @@ from unittest.mock import patch, PropertyMock
 
 from mockredis import mock_strict_redis_client
 
-from camfeeder.H264Feeder import H264Feeder
-from test.FeederTestBase import FeederTestBase
+from feeder.H264Feeder import H264Feeder
+from tests.base import FeederTestBase
 
 # Fix the working path
 abspath = os.path.abspath(__file__)
@@ -17,7 +17,7 @@ class TestMPEGCamFeeder(FeederTestBase):
     def setUp(self):
         self.rdb = mock_strict_redis_client()
         self.img = open('data/img.jpg', 'rb').read()
-        self.cf = H264Feeder(self.rdb, 'archimedes', 'http://fake.com/video.mjpeg', 'avconv')
+        self.cf = H264Feeder(self.rdb, 'archimedes', 'http://fake.com/video.mjpeg', 'ffmpeg')
 
         # We mock the subprocess.Popen call to provide our own test stream
         self.popen_patcher = patch('subprocess.Popen')
@@ -44,7 +44,7 @@ class TestMPEGCamFeeder(FeederTestBase):
 
         # Wait for the greenthread to finish.
         for g in self.cf._g:
-            g.wait()
+            g.join()
 
         expected_channel_name = "archimedes/h264"
         messages = self.rdb.pubsub[expected_channel_name]

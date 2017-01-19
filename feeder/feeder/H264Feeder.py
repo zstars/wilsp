@@ -1,6 +1,6 @@
 import subprocess
-import eventlet
-from eventlet import tpool
+import gevent
+from gevent import subprocess
 
 
 class H264Feeder(object):
@@ -73,10 +73,14 @@ class H264Feeder(object):
                 except ValueError as ex:
                     return 1
 
-        tpool.execute(run_ffmpeg)
+        # TODO: Used to be tpool.execute (for eventlet)
+        # TODO: Temporarily commented out.
+        # threadpool.apply(run_ffmpeg)
+
+        run_ffmpeg()
 
         print("H.264 greenlet is OUT")
 
     def start(self):
-        g = eventlet.spawn(self._run)
+        g = gevent.spawn(self._run)
         self._g.append(g)

@@ -1,16 +1,16 @@
 from abc import abstractmethod
-
-import eventlet
 import io
-import redis
 import time
+
+import gevent
+import redis
 from PIL import Image
 
 
 class CamFeeder(object):
     """
     CamFeeder abstract base class. Children CamFeeders should at least implement the _run_until_inactive method.
-    The base class handles FSP control and activity/inactivity flow, as long as _check_active() is periodically called.
+    The base class handles FPS control and activity/inactivity flow, as long as _check_active() is periodically called.
     """
 
     IMAGE_EXPIRE_TIME = 10
@@ -23,7 +23,7 @@ class CamFeeder(object):
 
     def __init__(self, rdb: redis.StrictRedis, redis_prefix: str, cam_name: str, url: str, max_fps: int,
                  rotation: float = None):
-        self._g = []  # type: [eventlet.greenthread.GreenThread]
+        self._g = []  # type: [gevent.greenlet.Greenlet]
         self._rdb = rdb  # type: redis.StrictRedis
         self._redis_prefix = redis_prefix
         self._url = url
@@ -53,11 +53,11 @@ class CamFeeder(object):
         Starts running the greenlet.
         :return:
         """
-        g = eventlet.spawn(self._run)
+        g = gevent.spawn(self._run)
         self._g.append(g)
 
         # Start the stats pusher as well.
-        g = eventlet.spawn(self._run_stats_greenthread)
+        g = gevent.spawn(self._run_stats_greenthread)
         self._g.append(g)
 
     ########################################################
@@ -71,7 +71,7 @@ class CamFeeder(object):
         """
         while True:
             self._push_stats()
-            eventlet.sleep(CamFeeder.STATS_PUSH_WAIT)
+            gevent.sleep(CamFeeder.STATS_PUSH_WAIT)
 
     def _push_stats(self) -> None:
         """
@@ -103,7 +103,7 @@ class CamFeeder(object):
         while not self._active:
             self._check_active()
             if not self._active:
-                eventlet.sleep(CamFeeder.SLEEP_WHEN_INACTIVE)
+                gevent.sleep(CamFeeder.SLEEP_WHEN_INACTIVE)
 
     def _run(self) -> None:
         """

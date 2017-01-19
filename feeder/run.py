@@ -4,14 +4,13 @@ import sys
 
 import redis
 import yaml
-
-import eventlet
+import gevent
 
 # Pre-set the working directory.
-from camfeeder.H264Feeder import H264Feeder
-from camfeeder.ImageRefreshCamFeeder import ImageRefreshCamFeeder
-from camfeeder.MJPEGCamFeeder import MJPEGCamFeeder
-from camfeeder.MPEGFeeder import MPEGFeeder
+from feeder.H264Feeder import H264Feeder
+from feeder.ImageRefreshCamFeeder import ImageRefreshCamFeeder
+from feeder.MJPEGCamFeeder import MJPEGCamFeeder
+from feeder.MPEGFeeder import MPEGFeeder
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -42,7 +41,7 @@ def watchdog(rdb):
     """
     while True:
         rdb.setex(REDIS_PREFIX + ":feeder:alive", 5, True)
-        eventlet.sleep(2)
+        gevent.sleep(2)
 
 
 def run():
@@ -97,7 +96,7 @@ def run():
         cf.start()
 
     # Create the watchdog
-    g = eventlet.spawn(watchdog, rdb)
+    g = gevent.spawn(watchdog, rdb)
     greenthreads.append(g)
 
     # Wait for all the greenlets

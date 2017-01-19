@@ -1,17 +1,18 @@
 import os
 import hashlib
-
-import eventlet
-import redis
 import time
-from mockredis import mock_strict_redis_client
-from camfeeder.CamFeeder import CamFeeder
-
 from unittest.mock import patch
 
-# Fix the working path
-from test.FeederTestBase import FeederTestBase
+import gevent
+import redis
 
+from mockredis import mock_strict_redis_client
+from feeder.CamFeeder import CamFeeder
+
+
+from tests.base import FeederTestBase
+
+# Fix the working path
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(os.path.join(dname, '..'))
@@ -110,7 +111,7 @@ class ConcreteCamFeeder(CamFeeder):
         while self._active:
             self._check_active()
             self._frames_this_cycle += 1
-            eventlet.sleep(0.01)
+            gevent.sleep(0.01)
 
     def _wait_until_active(self):
         self._times_inactive += 1
@@ -136,7 +137,7 @@ class TestRun(FeederTestBase):
         """
 
         # Give it some execution time.
-        eventlet.sleep(0.1)
+        gevent.sleep(0.1)
 
         # Should start inactive.
         self.assertEquals(0, self.cf._times_active)
@@ -144,19 +145,19 @@ class TestRun(FeederTestBase):
 
         # Should activate
         self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
-        eventlet.sleep(0.1)
+        gevent.sleep(0.1)
         self.assertEquals(1, self.cf._times_active)
         self.assertEquals(1, self.cf._times_inactive)
 
         # Should deactivate again
         self.rdb.delete('wilsat:cams:archimedes:active')
-        eventlet.sleep(0.1)
+        gevent.sleep(0.1)
         self.assertEquals(1, self.cf._times_active)
         self.assertEquals(2, self.cf._times_inactive)
 
         # Should activate
         self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
-        eventlet.sleep(0.1)
+        gevent.sleep(0.1)
 
     @patch.object(ConcreteCamFeeder, 'STATS_PUSH_WAIT', 0.1)
     def test_stats_pusher(self):
@@ -165,7 +166,7 @@ class TestRun(FeederTestBase):
 
         # Should activate
         self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
-        eventlet.sleep(0.3)
+        gevent.sleep(0.3)
 
         cycle_frames = self.rdb.get('wilsat:cams:archimedes:stats:cycle_frames')
         cycle_elapsed = self.rdb.get('wilsat:cams:archimedes:stats:cycle_elapsed')
@@ -181,4 +182,4 @@ class TestRun(FeederTestBase):
 
     def tearDown(self):
         for g in self._g:
-            eventlet.kill(g)
+            gevent.kill(g)

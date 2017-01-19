@@ -1,9 +1,12 @@
 import gevent
-import grequests
+from gevent import monkey
+monkey.patch_all()
+
+import requests
 import redis
 import time
 
-from feeder.CamFeeder import CamFeeder
+from feeder.base import CamFeeder
 
 
 class FrameGrabbingException(Exception):
@@ -59,8 +62,7 @@ class ImageRefreshCamFeeder(CamFeeder):
         :return:
         """
         try:
-            req = gevent.async.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)
-            r = req.send()
+            r = requests.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)
             if r.status_code != 200:
                 raise FrameGrabbingException("Status code is not 200")
             content = r.content

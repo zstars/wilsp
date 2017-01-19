@@ -6,7 +6,7 @@ import time
 import grequests
 from dateutil.parser import parse
 
-from feeder.CamFeeder import CamFeeder
+from feeder.base import CamFeeder
 
 
 class FrameGrabbingException(Exception):

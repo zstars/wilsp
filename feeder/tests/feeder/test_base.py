@@ -1,13 +1,14 @@
 import os
 import hashlib
 import time
+import unittest
 from unittest.mock import patch
 
 import gevent
 import redis
 
 from mockredis import mock_strict_redis_client
-from feeder.CamFeeder import CamFeeder
+from feeder.base import CamFeeder
 
 
 from tests.base import FeederTestBase
@@ -36,11 +37,12 @@ class TestBasic(FeederTestBase):
         Ensure standard rotation works.
         :return:
         """
+        orig_md5 = hashlib.md5(self.img)
         r = self.cf._rotated(self.img, 80)
         r_md5 = hashlib.md5(r).hexdigest()
         self.assertIsNotNone(r)
-        # TODO: Add image comparison that does not break.
-        # self.assertEquals('ff7fcdfb99a4391b2b1df3898045604b', r_md5)
+
+        self.assertNotEqual(orig_md5, r_md5)
 
     def test_rotates_nothing_when_0(self):
         """
@@ -183,3 +185,7 @@ class TestRun(FeederTestBase):
     def tearDown(self):
         for g in self._g:
             gevent.kill(g)
+
+
+if __name__ == '__main__':
+    unittest.main()

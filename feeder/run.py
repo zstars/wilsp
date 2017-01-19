@@ -8,7 +8,7 @@ import gevent
 
 # Pre-set the working directory.
 from feeder.H264Feeder import H264Feeder
-from feeder.ImageRefreshCamFeeder import ImageRefreshCamFeeder
+from feeder.image_refresher import ImageRefreshCamFeeder
 from feeder.MJPEGCamFeeder import MJPEGCamFeeder
 from feeder.MPEGFeeder import MPEGFeeder
 

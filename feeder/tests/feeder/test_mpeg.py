@@ -1,10 +1,13 @@
+from gevent import monkey
+monkey.patch_all()
+
+import io
 import os
 from unittest.mock import patch, PropertyMock
 
 from mockredis import mock_strict_redis_client
-
-from feeder.H264Feeder import H264Feeder
 from tests.base import FeederTestBase
+from feeder.mpeg import MPEGFeeder
 
 # Fix the working path
 abspath = os.path.abspath(__file__)
@@ -17,14 +20,14 @@ class TestMPEGCamFeeder(FeederTestBase):
     def setUp(self):
         self.rdb = mock_strict_redis_client()
         self.img = open('data/img.jpg', 'rb').read()
-        self.cf = H264Feeder(self.rdb, 'archimedes', 'http://fake.com/video.mjpeg', 'ffmpeg')
+        self.cf = MPEGFeeder(self.rdb, 'archimedes', 'http://fake.com/video.mjpeg', 'avconv')
 
         # We mock the subprocess.Popen call to provide our own test stream
         self.popen_patcher = patch('subprocess.Popen')
         self.popen_mock = self.popen_patcher.start()
         self.addCleanup(self.popen_patcher.stop)
 
-        self.test_file = open("data/stream.h264", "rb")
+        self.test_file = open("data/stream.mpeg", "rb")
         type(self.popen_mock.return_value).stdout = PropertyMock(return_value=self.test_file)
 
     def tearDown(self):
@@ -46,7 +49,7 @@ class TestMPEGCamFeeder(FeederTestBase):
         for g in self.cf._g:
             g.join()
 
-        expected_channel_name = "archimedes/h264"
+        expected_channel_name = "archimedes/mpeg"
         messages = self.rdb.pubsub[expected_channel_name]
 
         self.assertIsNotNone(messages)

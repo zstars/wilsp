@@ -1,8 +1,8 @@
 import unittest
 import gevent
 
+from tests.base import FeederTestBase
 import run
-from .FeederTestBase import FeederTestBase
 
 from run import REDIS_PREFIX
 
@@ -72,7 +72,7 @@ class TestFrames(FeederTestBase):
         """
         gevent.sleep(2)
 
-        for g in run.greenlets: # type: gevent.Greenlet
+        for g in run.greenthreads:  # type: gevent.Greenlet
             g.kill()
 
         gevent.sleep(11)

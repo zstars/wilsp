@@ -7,18 +7,18 @@ import yaml
 import gevent
 
 # Pre-set the working directory.
-from feeder.H264Feeder import H264Feeder
+from feeder.h264 import H264Feeder
 from feeder.image_refresher import ImageRefreshCamFeeder
-from feeder.MJPEGCamFeeder import MJPEGCamFeeder
-from feeder.MPEGFeeder import MPEGFeeder
+from feeder.mjpeg import MJPEGCamFeeder
+from feeder.mpeg import MPEGFeeder
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 
-CAMS_FILE = '../../cams.yml'
-CONFIG_FILE = 'config.yml'
+CAMS_FILE = '../cams.yml'
+CONFIG_FILE = 'config/config.yml'
 REDIS_PREFIX = 'wilsa'
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
@@ -111,4 +111,4 @@ if __name__ == '__main__':
 
     # Wait for greenlets
     for g in greenthreads:
-        g.wait()
+        g.join()

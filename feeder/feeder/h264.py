@@ -73,10 +73,6 @@ class H264Feeder(object):
                 except ValueError as ex:
                     return 1
 
-        # TODO: Used to be tpool.execute (for eventlet)
-        # TODO: Temporarily commented out.
-        # threadpool.apply(run_ffmpeg)
-
         run_ffmpeg()
 
         print("H.264 greenlet is OUT")

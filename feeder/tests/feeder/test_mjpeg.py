@@ -1,17 +1,20 @@
+from gevent import monkey
+monkey.patch_all()
+
+import unittest
 import io
 import os
-from unittest.mock import patch, MagicMock, PropertyMock
 
-import eventlet
-import erequests
+import gevent
+from unittest.mock import patch, MagicMock
 import requests
 from PIL import Image
 from mockredis import mock_strict_redis_client
 
-from test.FeederTestBase import FeederTestBase
-# Fix the working path
-from camfeeder.MJPEGCamFeeder import MJPEGCamFeeder
+from tests.base import FeederTestBase
+from feeder.mjpeg import MJPEGCamFeeder
 
+# Fix the working path
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(os.path.join(dname, '..'))
@@ -30,8 +33,8 @@ class TestBasic(FeederTestBase):
         self.rdb = mock_strict_redis_client()
         self.cf = MJPEGCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.mjpg', 10, 0)
 
-        # We mock erequests.async.get calls.
-        self.get_patcher = patch('erequests.async.get')
+        # We mock requests.get calls.
+        self.get_patcher = patch('requests.get')
         self.get_mock = self.get_patcher.start()
         self.addCleanup(self.get_patcher.stop)
 
@@ -39,7 +42,7 @@ class TestBasic(FeederTestBase):
         fixed_response.status_code = 200
         fixed_response.headers['content-type'] = 'multipart/x-mixed-replace;boundary=--video boundary--'
         fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
-        self.get_mock.return_value.send.return_value = fixed_response
+        self.get_mock.return_value = fixed_response
 
         # Advanced DARK MAGICKS. Would be nice to find a less contrived way to do this.
         # response_intra_mock = MagicMock()
@@ -49,7 +52,7 @@ class TestBasic(FeederTestBase):
     def test_mocking_scheme(self):
 
         idx = 0
-        for idx, line in enumerate(erequests.async.get('oo').send().iter_lines()):
+        for idx, line in enumerate(requests.get('oo').iter_lines()):
             self.assertIsNotNone(line)
 
         self.assertGreater(idx, 0)
@@ -66,7 +69,7 @@ class TestBasic(FeederTestBase):
         :return:
         """
         self.assertIsNone(self.cf._request_response)
-        self.get_mock.return_value.send.return_value.headers['content-type'] = 'multipart/x-mixed-replace'
+        self.get_mock.return_value.headers['content-type'] = 'multipart/x-mixed-replace'
 
         try:
             self.cf._start_streaming_request()
@@ -130,8 +133,8 @@ class TestRun(FeederTestBase):
         self.rdb = mock_strict_redis_client()
         self.cf = MJPEGCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.mjpg', 10000, 0)
 
-        # We mock grequests.get calls.
-        self.get_patcher = patch('erequests.async.get')
+        # We mock requests.get calls.
+        self.get_patcher = patch('requests.get')
         self.get_mock = self.get_patcher.start()
         self.addCleanup(self.get_patcher.stop)
 
@@ -139,7 +142,7 @@ class TestRun(FeederTestBase):
         fixed_response.status_code = 200
         fixed_response.headers['content-type'] = 'multipart/x-mixed-replace;boundary=--video boundary--'
         fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
-        self.get_mock.return_value.send.return_value = fixed_response
+        self.get_mock.return_value = fixed_response
 
         # Start running the greenlet.
         self.cf.start()
@@ -159,7 +162,7 @@ class TestRun(FeederTestBase):
     def test_flow(self):
         # Should activate
         self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
-        eventlet.sleep(0.2)
+        gevent.sleep(0.2)
 
         # Get current number of frames
         frames = self.cf._frames_this_cycle
@@ -172,7 +175,7 @@ class TestRun(FeederTestBase):
 
     def tearDown(self):
         for g in self._g:
-            eventlet.kill(g)
+            gevent.kill(g)
 
 
 class TestRunRegressions(FeederTestBase):
@@ -185,7 +188,7 @@ class TestRunRegressions(FeederTestBase):
         self.cf = MJPEGCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.mjpg', 10000, 0)
 
         # We mock grequests.get calls.
-        self.get_patcher = patch('erequests.async.get')
+        self.get_patcher = patch('requests.get')
         self.get_mock = self.get_patcher.start()
         self.addCleanup(self.get_patcher.stop)
 
@@ -193,7 +196,7 @@ class TestRunRegressions(FeederTestBase):
         fixed_response.status_code = 200
         fixed_response.headers['content-type'] = 'multipart/x-mixed-replace;boundary=--video boundary--'
         fixed_response.raw = io.FileIO('data/example.mjpeg', 'rb')
-        self.get_mock.return_value.send.return_value = fixed_response
+        self.get_mock.return_value = fixed_response
 
         # Start running the greenlet.
         self.cf.start()
@@ -208,8 +211,12 @@ class TestRunRegressions(FeederTestBase):
 
         # Should activate
         self.rdb.setex('wilsat:cams:archimedes:active', 10, 1)
-        eventlet.sleep(0.4)
+        gevent.sleep(0.4)
 
     def tearDown(self):
         for g in self._g:
-            eventlet.kill(g)
+            gevent.kill(g)
+
+
+if __name__ == '__main__':
+    unittest.main()

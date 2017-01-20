@@ -1,13 +1,11 @@
-import io
 import os
+import unittest
 from unittest.mock import patch, PropertyMock
 
-import eventlet
-import requests
 from mockredis import mock_strict_redis_client
 
-from test.FeederTestBase import FeederTestBase
-from camfeeder.MPEGFeeder import MPEGFeeder
+from feeder.h264 import H264Feeder
+from tests.base import FeederTestBase
 
 # Fix the working path
 abspath = os.path.abspath(__file__)
@@ -20,14 +18,14 @@ class TestMPEGCamFeeder(FeederTestBase):
     def setUp(self):
         self.rdb = mock_strict_redis_client()
         self.img = open('data/img.jpg', 'rb').read()
-        self.cf = MPEGFeeder(self.rdb, 'archimedes', 'http://fake.com/video.mjpeg', 'avconv')
+        self.cf = H264Feeder(self.rdb, 'archimedes', 'http://fake.com/video.mjpeg', 'ffmpeg')
 
         # We mock the subprocess.Popen call to provide our own test stream
-        self.popen_patcher = patch('subprocess.Popen')
+        self.popen_patcher = patch('feeder.h264.subprocess.Popen')
         self.popen_mock = self.popen_patcher.start()
         self.addCleanup(self.popen_patcher.stop)
 
-        self.test_file = open("data/stream.mpeg", "rb")
+        self.test_file = open("data/stream.h264", "rb")
         type(self.popen_mock.return_value).stdout = PropertyMock(return_value=self.test_file)
 
     def tearDown(self):
@@ -47,11 +45,15 @@ class TestMPEGCamFeeder(FeederTestBase):
 
         # Wait for the greenthread to finish.
         for g in self.cf._g:
-            g.wait()
+            g.join()
 
-        expected_channel_name = "archimedes/mpeg"
+        expected_channel_name = "archimedes/h264"
         messages = self.rdb.pubsub[expected_channel_name]
 
         self.assertIsNotNone(messages)
         self.assertGreater(len(messages), 0)
         self.assertGreater(len(messages[0]), 10)
+
+
+if __name__ == '__main__':
+    unittest.main()

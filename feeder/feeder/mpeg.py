@@ -1,8 +1,6 @@
 import subprocess
 import gevent
 
-from gevent import threadpool
-
 
 class MPEGFeeder(object):
     """
@@ -46,8 +44,7 @@ class MPEGFeeder(object):
                 except ValueError as ex:
                     return 1
 
-        # TODO: ADD THIS
-        # tpool.execute(run_ffmpeg)
+        run_ffmpeg()
 
         print("MPEG greenlet is OUT")
 

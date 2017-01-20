@@ -1,9 +1,12 @@
-import datetime
 import gevent
+from gevent import monkey
+monkey.patch_all()
+
+import datetime
+import time
+
 import redis
 import requests
-import time
-import grequests
 from dateutil.parser import parse
 
 from feeder.base import CamFeeder
@@ -200,8 +203,7 @@ class MJPEGCamFeeder(CamFeeder):
         unless the start was apparently successful.
         :return:
         """
-        r = grequests.async.get(self._url, stream=True)
-        resp = r.send() # type: requests.Response
+        resp = requests.get(self._url, stream=True)  # type: requests.Response
         if resp.status_code != 200:
             content = resp.content
             raise FrameGrabbingException('Unexpected response: not 200. Content was: ' + content)

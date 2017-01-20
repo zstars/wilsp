@@ -172,7 +172,10 @@ class MJPEGCamFeeder(CamFeeder):
         """
         headers = {}
         while True:
-            line = self._request_response.raw.readline()
+            raw_file = self._request_response.raw
+            line = raw_file.readline()
+            if len(line) == 0:
+                pass
             if len(line) == 0:
                 raise FrameGrabbingException('EOF reached before being able to read headers')
             line = line.strip()

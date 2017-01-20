@@ -4,4 +4,4 @@
 cd feeder
 export PYTHONPATH="$PYTHONPATH:$(pwd)"
 
-nosetests test/feeder/*
+nosetests tests/feeder/*

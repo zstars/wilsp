@@ -1,7 +1,7 @@
 
 . .pyenv/bin/activate
 
-cd feeder/src
+cd feeder
 export PYTHONPATH="$PYTHONPATH:$(pwd)"
 
-nosetests test/camfeeder/*
+nosetests test/feeder/*

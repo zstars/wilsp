@@ -34,6 +34,6 @@ def create_app(config_name):
     # db.init_app(app)
 
     rdb.init_app(app)
-    socketio.init_app(app, async_mode='gevent', engine_io_logger=True, ping_timeout=5, ping_interval=2)
+    socketio.init_app(app, async_mode='gevent', engine_io_logger=True)
 
     return app

@@ -1,6 +1,9 @@
+import gevent
+from gevent import monkey
+monkey.patch_all()
+
 import io
 import time
-import eventlet
 
 from PIL import Image
 from flask import render_template, current_app, make_response, Response, request, stream_with_context
@@ -78,7 +81,7 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate, tfps):
         time_to_wait = target_frame_time - time_since_last_frame_start
         if time_to_wait > 0:
             print("Sleeping for: %f" % time_to_wait)
-            eventlet.sleep(time_to_wait)
+            gevent.sleep(time_to_wait)
             last_frame_start_time = current_time + time_to_wait
         else:
             print("Sleeping for 0")
@@ -102,7 +105,7 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate, tfps):
 
             # If there is no error, we just retry: the webcam image should be available soon.
             if current_app.config.get('WAIT_FOR_WEBCAM', False):
-                eventlet.sleep(current_app.config.get('WAIT_FOR_WEBCAM_TIME', 0.1))
+                gevent.sleep(current_app.config.get('WAIT_FOR_WEBCAM_TIME', 0.1))
                 continue
 
             yield (b'--frame\r\n'
@@ -194,7 +197,7 @@ def cam(cam_id):
 
             # If there is no error, we just retry: the webcam image should be available soon.
             if current_app.config.get('WAIT_FOR_WEBCAM', False):
-                eventlet.sleep(current_app.config.get('WAIT_FOR_WEBCAM_TIME', 0.1))
+                gevent.sleep(current_app.config.get('WAIT_FOR_WEBCAM_TIME', 0.1))
                 continue
         else:
             # It will also be possible to rotate the image via the actual definition of the camera, which will be

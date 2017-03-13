@@ -1,4 +1,4 @@
-import eventlet
+import gevent
 from flask import request
 
 from app.main.SocketIOH264RedisBroadcaster import SocketIOH264RedisBroadcaster
@@ -19,12 +19,12 @@ def mjpeg_stream_start(data):
     tfps = data.get('tfps', 5)
 
     # request.sid contains the unique identifier of the client that sent ht events, which is also the channel
-    # name that shoul enable us ot send messages specifically to that client.
+    # name that should enable us to send messages specifically to that client.
     client_sid = request.sid
 
     # Start the broadcaster
     t = SocketIOMJPEGBroadcaster(cam, client_sid, tfps)
-    eventlet.spawn(t.run)
+    gevent.spawn(t.run)
 
 
 @socketio.on('start', namespace='/mpeg')
@@ -44,7 +44,7 @@ def mpeg_stream_start(data):
     # Though there might be some more efficient ways through broadcasting, for now we create a broadcaster greenlet
     # for every client, and we pass it the client_sid so that it can send data to a specific client.
     t = SocketIOMPEGRedisBroadcaster(cam, client_sid)
-    eventlet.spawn(t.run)
+    gevent.spawn(t.run)
 
 
 @socketio.on('start', namespace='/h264')
@@ -64,4 +64,4 @@ def h264_stream_start(data):
     # Though there might be some more efficient ways through broadcasting, for now we create a broadcaster greenlet
     # for every client, and we pass it the client_sid so that it can send data to a specific client.
     t = SocketIOH264RedisBroadcaster(cam, client_sid)
-    eventlet.spawn(t.run)
+    gevent.spawn(t.run)

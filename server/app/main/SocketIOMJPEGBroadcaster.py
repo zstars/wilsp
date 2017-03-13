@@ -1,4 +1,7 @@
-import eventlet
+import gevent
+from gevent import monkey
+monkey.patch_all()
+
 import time
 
 from flask import current_app
@@ -60,4 +63,4 @@ class SocketIOMJPEGBroadcaster(object):
             if(time_to_sleep < 0):
                 time_to_sleep = 0
 
-            eventlet.sleep(time_to_sleep)
+            gevent.sleep(time_to_sleep)

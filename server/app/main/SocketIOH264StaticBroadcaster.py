@@ -1,9 +1,8 @@
 import json
 
-import eventlet
-from eventlet import monkey_patch
-
-monkey_patch(all=True)
+import gevent
+from gevent import monkey
+monkey.patch_all()
 
 import struct
 
@@ -67,6 +66,6 @@ class SocketIOH264StaticBroadcaster(object):
                 socketio.emit('stream', b'\x00\x00\x00\x01' + s, namespace=SocketIOH264StaticBroadcaster.SOCKETIO_NAMESPACE,
                               room=self._client_sid)
 
-                eventlet.sleep(0.1)
+                gevent.sleep(0.1)
 
         print("OUT")

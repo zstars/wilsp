@@ -1,6 +1,7 @@
 
-from eventlet import monkey_patch
-monkey_patch(all=True)
+import gevent
+from gevent import monkey
+monkey.patch_all()
 
 import struct
 

@@ -3,7 +3,7 @@ import redis
 from unipath import Path
 import sys
 
-# TODO: Clean this up
+
 sys.path.insert(0, Path(__file__).parent.parent.absolute())
 from run import REDIS_HOST, REDIS_PORT, REDIS_DB
 

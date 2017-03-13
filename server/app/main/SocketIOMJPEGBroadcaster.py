@@ -20,6 +20,9 @@ class SocketIOMJPEGBroadcaster(object):
     Possible improvements:
      - It might be possible and more efficient to truly broadcast to a room, but in that case
      there would be a single instance of this class.
+
+    Issues:
+     - We need an efficient way to know when we should exit the threadlet (remote user no longer listening).
     """
 
     SOCKETIO_NAMESPACE = '/mjpeg'
@@ -28,21 +31,29 @@ class SocketIOMJPEGBroadcaster(object):
         self._cam_name = cam_name
         self._fps = fps
         self._target_sleep = 1.0 / self._fps
+        self._should_stop = False
 
         print("CLIENT SID IS: ", client_sid)
         self._client_sid = client_sid
 
         self._cam_key = '{}:cams:{}'.format(current_app.config['REDIS_PREFIX'], self._cam_name)
 
+    def stop(self):
+        """
+        Stops the broadcaster. It should be stopped, for instance, when the client loses connection.
+        Otherwise we "leak" greenlets.
+        :return:
+        """
+        self._should_stop = True
+
     def run(self):
         print("Running SocketIO MJPEG broadcaster at {} target FPS".format(self._fps))
 
         not_available = open("app/static/no_image_available.png", "rb").read()
 
-        while True:
+        while not self._should_stop:
 
             frame_start_time = time.time()
-
 
             frame = rdb.get(self._cam_key + ":lastframe")
 
@@ -52,15 +63,16 @@ class SocketIOMJPEGBroadcaster(object):
             rdb.setex(self._cam_key + ":active", 30, 1)
 
             if frame is not None:
-                socketio.emit('frame', frame, namespace=SocketIOMJPEGBroadcaster.SOCKETIO_NAMESPACE,
+                r = socketio.emit('frame', frame, namespace=SocketIOMJPEGBroadcaster.SOCKETIO_NAMESPACE,
                               room=self._client_sid)
             else:
-                socketio.emit('frame', not_available, namespace=SocketIOMJPEGBroadcaster.SOCKETIO_NAMESPACE,
+                r = socketio.emit('frame', not_available, namespace=SocketIOMJPEGBroadcaster.SOCKETIO_NAMESPACE,
                               room=self._client_sid)
-
 
             time_to_sleep = self._target_sleep - (time.time() - frame_start_time)
             if(time_to_sleep < 0):
                 time_to_sleep = 0
 
             gevent.sleep(time_to_sleep)
+
+        print("SocketIO MJPEG broadcaster stopped for client [{}]".format(self._client_sid))

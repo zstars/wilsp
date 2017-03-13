@@ -9,8 +9,40 @@ from app.main.redis_funcs import mark_active
 from .. import socketio
 
 
+# Store the local broadcasters so that we can later disconnect them.
+BROADCASTERS = {}
+
+
+@socketio.on_error(namespace='/mjpeg')
+def chat_error_handler(e):
+    print('An error has occurred: ' + str(e))
+
+@socketio.on('disconnect', namespace='/mjpeg')
+def mjpeg_disconnect(*args):
+    client_sid = request.sid
+    print("Client [{}] disconnected.".format(client_sid))
+
+    if client_sid in BROADCASTERS:
+        print("Stopping the broadcaster.")
+        broadcaster = BROADCASTERS[client_sid]
+        broadcaster.stop()
+        del BROADCASTERS[client_sid]
+
+
+#@socketio.on('disconnect', namespace='/')
+#def gen_disconnect(*args):
+#    print("GENERIC DISCONNECT EVENT: {}".format(args))
+
+
 @socketio.on('start', namespace='/mjpeg')
 def mjpeg_stream_start(data):
+    """
+    Start serving MJPEG to a specific client. A gevent threadlet is started so we need to be sure to eventually
+    terminate it.
+    :param data:
+    :return:
+    """
+
     print('[mjpeg]: Starting MJPEG stream')
 
     cam = data['cam']
@@ -24,6 +56,11 @@ def mjpeg_stream_start(data):
 
     # Start the broadcaster
     t = SocketIOMJPEGBroadcaster(cam, client_sid, tfps)
+
+    # Store the Broadcaster so that we can stop it when the client disconnects.
+    # Should be tested but it should work.
+    BROADCASTERS[client_sid] = t
+
     gevent.spawn(t.run)
 
 

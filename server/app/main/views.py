@@ -19,12 +19,22 @@ def index():
 
 @main.route('/exps/imgrefresh/<cam>')
 def exp_imgrefresh(cam):
+    """
+    Seems to be working fine. Tests not yet available, though.
+    :param cam:
+    :return:
+    """
     tfps = request.values.get('tfps', 5)
     return render_template('exps/camera_image_refresh.html', cam=cam, tfps=tfps)
 
 
 @main.route('/exps/mjpegnative/<cam>')
 def exp_mjpegnative(cam):
+    """
+    Working fine. Though native MJPEG has no significant advantages over any other method.
+    :param cam:
+    :return:
+    """
     tfps = request.values.get('tfps', 5)
     tfps = int(tfps)
     return render_template('exps/camera_mjpeg_native.html', cam=cam, tfps=tfps)
@@ -32,6 +42,11 @@ def exp_mjpegnative(cam):
 
 @main.route('/exps/mjpegjs/<cam>')
 def exp_mjpegjs(cam):
+    """
+    Working fine. Relies on socket IO.
+    :param cam:
+    :return:
+    """
     tfps = request.values.get('tfps', 5)
     path = current_app.config.get('SOCKETIO_PATH', '')
     return render_template('exps/camera_mjpeg_js.html', cam=cam, socketio_path=path, tfps=tfps)

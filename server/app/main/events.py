@@ -81,6 +81,7 @@ def mpeg_stream_start(data):
     # Though there might be some more efficient ways through broadcasting, for now we create a broadcaster greenlet
     # for every client, and we pass it the client_sid so that it can send data to a specific client.
     t = SocketIOMPEGRedisBroadcaster(cam, client_sid)
+
     gevent.spawn(t.run)
 
 
@@ -101,4 +102,9 @@ def h264_stream_start(data):
     # Though there might be some more efficient ways through broadcasting, for now we create a broadcaster greenlet
     # for every client, and we pass it the client_sid so that it can send data to a specific client.
     t = SocketIOH264RedisBroadcaster(cam, client_sid)
+
+    # Store the Broadcaster so that we can stop it when the client disconnects.
+    # Should be tested but it should work.
+    BROADCASTERS[client_sid] = t
+
     gevent.spawn(t.run)

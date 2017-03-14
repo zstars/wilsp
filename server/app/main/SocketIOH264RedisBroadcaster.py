@@ -35,6 +35,15 @@ class SocketIOH264RedisBroadcaster(object):
         self._cam_name = cam_name
         self._channel = "{}/h264".format(cam_name)  # Redis channel to listen to.
         self._client_sid = client_sid
+        self._should_stop = False
+
+    def stop(self):
+        """
+        Stops the broadcaster. It should be stopped, for instance, when the client loses connection.
+        Otherwise we "leak" greenlets.
+        :return:
+        """
+        self._should_stop = True
 
     def run(self):
 
@@ -62,7 +71,8 @@ class SocketIOH264RedisBroadcaster(object):
 
         buffer = bytearray()
 
-        while True:
+        while not self._should_stop:
+
             for item in rchannel.listen():
 
                 # Print commented out because it works and spams the console.

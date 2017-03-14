@@ -7,6 +7,7 @@ import threading
 import time
 import unittest
 import requests
+from flask.testing import FlaskClient
 
 from mockredis import mock_strict_redis_client
 from selenium import webdriver
@@ -20,6 +21,13 @@ current_port = 5001
 class BaseTestCase(unittest.TestCase):
     app = None
 
+    def __init__(self, *args, **kwargs):
+        """
+        Just for the IDE FlaskClient tip.
+        """
+        super().__init__(*args, **kwargs)
+        self.client = None  # type: FlaskClient
+
     @classmethod
     def setUpClass(cls):
         cls.app = create_app('testing')
@@ -30,7 +38,7 @@ class BaseTestCase(unittest.TestCase):
         logger.setLevel("ERROR")
 
         if not getattr(cls, 'CLIENT_PER_TEST', None):
-            cls.client = cls.app.test_client(use_cookies=True)
+            cls.client = cls.app.test_client(use_cookies=True)  # type: FlaskClient
 
             if getattr(cls, 'USE_SESSIONS', None):
                 cls.client.__enter__()
@@ -83,10 +91,6 @@ class BaseTestCase(unittest.TestCase):
                 cls.client.__exit__(None, None, None)
 
         cls.app_context.pop()
-
-    def login(self, username='testuser'):
-        result = self.client.get('/testing/login?login=%s' % username)
-        return result
 
 
 class SeleniumTestCase(BaseTestCase):

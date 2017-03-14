@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
-import json
 
 from tests.base import BaseTestCase
 
 
 class TestMJPEGStreamer(BaseTestCase):
+
+    CLIENT_PER_TEST = True
 
     def test_pass(self):
         pass

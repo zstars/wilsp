@@ -18,11 +18,6 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-REDIS_PREFIX = 'wilsa'
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
-REDIS_DB = 0
-
 cam_feeders = {}
 greenthreads = []
 
@@ -39,7 +34,7 @@ def watchdog(rdb):
     :return:
     """
     while True:
-        rdb.setex(REDIS_PREFIX + ":feeder:alive", 5, True)
+        rdb.setex(config.REDIS_PREFIX + ":feeder:alive", 5, True)
         gevent.sleep(2)
 
 
@@ -55,7 +50,7 @@ def run():
     cams = data['cams']  # type: dict
 
     # Connect to the redis instance
-    rdb = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, decode_responses=True)
+    rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=True)
 
     # Create every cam feeder
     for cam_name, cam in cams.items():
@@ -71,9 +66,9 @@ def run():
         h264 = cam.get('h264')
 
         if mjpeg_url is not None:
-            cf = MJPEGCamFeeder(rdb, REDIS_PREFIX, cam_name, mjpeg_url, 30, rotation)
+            cf = MJPEGCamFeeder(rdb, config.REDIS_PREFIX, cam_name, mjpeg_url, 30, rotation)
         elif url is not None:
-            cf = ImageRefreshCamFeeder(rdb, REDIS_PREFIX, cam_name, url, 30, rotation)
+            cf = ImageRefreshCamFeeder(rdb, config.REDIS_PREFIX, cam_name, url, 30, rotation)
 
         if mjpeg_url is None and url is None:
             raise Exception("img_url or mjpeg_url not specified for camera {}".format(cam_name))

@@ -5,7 +5,7 @@ import sys
 
 
 sys.path.insert(0, Path(__file__).parent.parent.absolute())
-from run import REDIS_HOST, REDIS_PORT, REDIS_DB
+from feeder import config
 
 
 class FeederTestBase(unittest.TestCase):
@@ -36,7 +36,7 @@ class FeederTestBase(unittest.TestCase):
         """
 
         # Connect to the redis instance.
-        self.rdb = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
+        self.rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB)
 
     def tearDown(self):
         """

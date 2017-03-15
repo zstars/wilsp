@@ -12,7 +12,15 @@ combinations, don't seem to work together nice enough with socketio.
 ## Feeder
 
 The Feeder relies on gevent. (Enventually it should be ported
-to eventlet). 
+to eventlet).
+
+### Configuration scheme
+
+The main Feeder configuration file is the config.py script. The file is meant to be version-controlled.
+Secret values should be referenced from that file as environment variables.
+
+The cameras definition file (cams.yml) is a different, YML file. Its path is referenced through config.py through
+the ```CAMS_YML``` setting.
 
 ## Server
 

@@ -35,13 +35,17 @@ class ImageRefreshCamFeeder(CamFeeder):
         the camera should not be active anymore.
         :return:
         """
+        fails = 0
         while self._active:
 
-            update_start_time = time.time()
-
-            frame = self._grab_frame()
-            frame = self._rotated(frame, self._rotation)
-            self._put_frame(frame)
+            try:
+                update_start_time = time.time()
+                frame = self._grab_frame()
+                frame = self._rotated(frame, self._rotation)
+                self._put_frame(frame)
+            except Exception as exc:
+                fails += 1
+                # print("Failed to grab frame. Failed frames: {}".format(fails))
 
             self._check_active()
 

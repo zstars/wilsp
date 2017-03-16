@@ -27,7 +27,7 @@ benchmark_measurements_greenlet = None
 
 
 def benchmark():
-    N = 500
+    N = 350
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g)
@@ -70,6 +70,10 @@ def measurements_g():
         print("Av: {}. Oc: {}. TPhys: {}".format(mem.available / (1024.0 ** 2), mem.used / (1024.0 ** 2),
                                                  mem.total / (1024.0 ** 2)))
         print("{}".format(psutil.cpu_percent(interval=None, percpu=False)))
+
+        print("Fds and open files: {} {}".format(proc.num_fds(), proc.open_files()))
+
+        print("")
         gevent.sleep(1)
 
 

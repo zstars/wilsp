@@ -63,6 +63,7 @@ class ImageRefreshCamFeeder(CamFeeder):
         """
         try:
             r = requests.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)
+            # print("[dbg] {}".format([r.status_code, r.text, self._url, r.url]))
             if r.status_code != 200:
                 raise FrameGrabbingException("Status code is not 200")
             content = r.content

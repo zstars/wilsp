@@ -49,6 +49,8 @@ def run():
     data = yaml.load(open(config.CAMS_YML, 'r'))
     cams = data['cams']  # type: dict
 
+    print("Loaded {}".format(config.CAMS_YML))
+
     # Connect to the redis instance
     rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=True)
 

@@ -26,6 +26,9 @@ class ImageRefreshCamFeeder(CamFeeder):
                  rotation: float = None):
         super().__init__(rdb, redis_prefix, cam_name, url, max_fps, rotation)
 
+        self.rsess = requests.session()
+        self.rsess.keep_alive = False
+
         if max_fps <= 0:
             raise Exception('0 is not an acceptable max_fps')
 
@@ -45,7 +48,7 @@ class ImageRefreshCamFeeder(CamFeeder):
                 self._put_frame(frame)
             except Exception as exc:
                 fails += 1
-                # print("Failed to grab frame. Failed frames: {}".format(fails))
+                print("Failed to grab frame. Failed frames: {}".format(fails))
 
             self._check_active()
 
@@ -66,7 +69,7 @@ class ImageRefreshCamFeeder(CamFeeder):
         :return:
         """
         try:
-            r = requests.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)
+            r = self.rsess.get(self._url, stream=True, timeout=ImageRefreshCamFeeder.REQUEST_TIMEOUT)
             # print("[dbg] {}".format([r.status_code, r.text, self._url, r.url]))
             if r.status_code != 200:
                 raise FrameGrabbingException("Status code is not 200")

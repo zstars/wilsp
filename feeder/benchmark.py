@@ -27,7 +27,7 @@ benchmark_measurements_greenlet = None
 
 
 def benchmark():
-    N = 350
+    N = 15
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g)
@@ -96,4 +96,4 @@ def keep_active_g(n):
 benchmark()
 
 # Run for a fixed time
-benchmark_runner_greenlet.join(80)
+benchmark_runner_greenlet.join(120)

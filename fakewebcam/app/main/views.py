@@ -39,7 +39,7 @@ def image():
     current_time = int(time.time() * 1000)
     global cycle_start_time
     elapsed_time = current_time - cycle_start_time
-    if elapsed_time > 20000:
+    if elapsed_time > 10000:
         cycle_start_time = int(time.time() * 1000)
         current_time = int(time.time() * 1000)
         elapsed_time = 0

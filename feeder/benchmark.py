@@ -45,6 +45,10 @@ def benchmark_run_g(n):
     sb = io.StringIO()
     sb.write("cams:\n")
     for i in range(n):
+
+
+
+
         sb.write("    cam{}:\n".format(i))
         sb.write("        img_url: http://cams.weblab.deusto.es/webcam/proxied.py/arquimedes1_rotate\n")
         sb.write("        mjpeg_urls: http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg\n")

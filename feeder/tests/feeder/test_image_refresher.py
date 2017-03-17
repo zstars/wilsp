@@ -30,7 +30,7 @@ class TestBasic(FeederTestBase):
         self.cf = ImageRefreshCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.jpg', 10, 0)
 
         # We mock requests.get calls.
-        self.get_patcher = patch('requests.get')
+        self.get_patcher = patch('requests.Session.get')
         self.get_mock = self.get_patcher.start()
         self.addCleanup(self.get_patcher.stop)
 
@@ -61,7 +61,7 @@ class TestBasicException(FeederTestBase):
         self.cf = ImageRefreshCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.jpg', 10, 0)
 
         # We mock erequests.async.get calls.
-        self.get_patcher = patch('requests.get')
+        self.get_patcher = patch('requests.Session.get')
         self.get_mock = self.get_patcher.start()
         self.addCleanup(self.get_patcher.stop)
 
@@ -122,7 +122,7 @@ class TestRun(FeederTestBase):
         self.cf = ImageRefreshCamFeeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/image.jpg', 10000, 0)
 
         # We mock erequests.async.get calls.
-        self.get_patcher = patch('requests.get')
+        self.get_patcher = patch('requests.Session.get')
         self.get_mock = self.get_patcher.start()
         self.addCleanup(self.get_patcher.stop)
 

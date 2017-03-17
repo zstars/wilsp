@@ -48,7 +48,7 @@ def image():
     if earliest_ts < 0:
         earliest_ts = 0
 
-    return send_file(io.BytesIO(images[earliest_ts][1]))
+    return send_file(io.BytesIO(images[earliest_ts][1]), mimetype="image/jpg")
 
 @main.route('/')
 def index():

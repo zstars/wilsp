@@ -26,4 +26,4 @@ ret = total_fps / total_fps_n
 
 print("AVERAGE FPS: ", ret)
 
-return ret
+return tostring(ret)

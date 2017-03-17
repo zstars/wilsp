@@ -25,6 +25,9 @@ print(os.getcwd())
 benchmark_runner_greenlet = None
 benchmark_measurements_greenlet = None
 
+lua_fps = None  # type: StrictRedis.Script
+rdb = None
+
 
 def benchmark():
     N = 15
@@ -45,12 +48,8 @@ def benchmark_run_g(n):
     sb = io.StringIO()
     sb.write("cams:\n")
     for i in range(n):
-
-
-
-
         sb.write("    cam{}:\n".format(i))
-        sb.write("        img_url: http://cams.weblab.deusto.es/webcam/proxied.py/arquimedes1_rotate\n")
+        sb.write("        img_url: http://weblab.deusto.es/website/assets/img/logo.png\n")
         sb.write("        mjpeg_urls: http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg\n")
         sb.write("        rotate: 0\n")
         sb.write("        mpeg: False\n")
@@ -70,14 +69,14 @@ def measurements_g():
     proc = psutil.Process()
     mem = psutil.virtual_memory()
 
+    gevent.sleep(4)
+
     while True:
         print("Av: {}. Oc: {}. TPhys: {}".format(mem.available / (1024.0 ** 2), mem.used / (1024.0 ** 2),
                                                  mem.total / (1024.0 ** 2)))
-        print("{}".format(psutil.cpu_percent(interval=None, percpu=False)))
-
+        print("CPU: {}".format(psutil.cpu_percent(interval=None, percpu=False)))
         print("Fds and open files: {} {}".format(proc.num_fds(), proc.open_files()))
-
-        print("")
+        print("Average FPS: {}".format(lua_fps()))
         gevent.sleep(1)
 
 
@@ -87,7 +86,13 @@ def keep_active_g(n):
     :return:
     """
     # Connect to the redis instance
+    global rdb
     rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=True)
+
+    # Register Lua scripts
+    lua_fps_code = open('lua/fps.lua', 'r').read()
+    global lua_fps
+    lua_fps = rdb.register_script(lua_fps_code)
 
     while True:
         for i in range(n):

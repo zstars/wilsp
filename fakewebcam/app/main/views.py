@@ -15,6 +15,7 @@ images_indexed = {}
 timestamps = []
 cycle_start_time = (time.time() * 1000)
 
+
 @main.record
 def setup(state):
     # Load images from directory
@@ -31,6 +32,15 @@ def setup(state):
         global timestamps
         timestamps = [img[0] for img in images]
 
+
+@main.route('/fakewebcam/version')
+def leveldeep():
+    return "Leveldeep"
+
+
+@main.route('/version')
+def version():
+    return "Version: Fake Webcam 1.0"
 
 @main.route('/image.jpg')
 def image():

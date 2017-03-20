@@ -12,6 +12,7 @@ Flask-SocketIO==2.8.5
 Flask-SQLAlchemy==2.1
 gevent==1.2.1
 greenlet==0.4.12
+gunicorn==19.7.0
 itsdangerous==0.24
 Jinja2==2.8
 MarkupSafe==0.23
@@ -28,6 +29,7 @@ python-socketio==1.7.2
 PyYAML==3.11
 redis==2.10.5
 requests==2.10.0
+selenium==3.3.1
 six==1.10.0
 SQLAlchemy==1.0.13
 visitor==0.1.3

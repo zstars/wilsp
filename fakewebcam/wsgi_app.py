@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+from os import environ
 import sys
 
 from app import create_app
@@ -22,3 +23,21 @@ import logging
 file_handler = logging.FileHandler(filename='errors.log')
 file_handler.setLevel(logging.INFO)
 application.logger.addHandler(file_handler)
+
+
+
+class CherrokeeFix(object):
+
+    def __init__(self, app, script_name):
+        self.app = app
+        self.script_name = script_name
+
+    def __call__(self, environ, start_response):
+        path = environ.get('SCRIPT_NAME', '') + environ.get('PATH_INFO', '')
+        environ['SCRIPT_NAME'] = self.script_name
+        environ['PATH_INFO'] = path[len(self.script_name):]
+        # assert path[:len(self.script_name)] == self.script_name
+        return self.app(environ, start_response)
+
+
+application.wsgi_app = CherrokeeFix(application.wsgi_app, '/fakewebcam')

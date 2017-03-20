@@ -1,3 +1,5 @@
+import traceback
+
 import gevent
 from gevent import monkey
 monkey.patch_all()
@@ -49,6 +51,7 @@ class ImageRefreshCamFeeder(CamFeeder):
             except Exception as exc:
                 fails += 1
                 print("Failed to grab frame. Failed frames: {}".format(fails))
+                # traceback.print_exc()
 
             self._check_active()
 
@@ -63,6 +66,8 @@ class ImageRefreshCamFeeder(CamFeeder):
                 gevent.sleep(0)
             else:
                 gevent.sleep(time_left)
+
+            # gevent.sleep(0)
 
     def _grab_frame(self) -> bytes:
         """

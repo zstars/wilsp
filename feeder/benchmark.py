@@ -30,35 +30,47 @@ rdb = None
 
 
 def benchmark():
-    N = 15
+    N = [10, 10, 10, 10]
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g)
     benchmark_keep_active_greenlet = gevent.spawn(keep_active_g, N)
 
 
-def benchmark_run_g(n):
+def benchmark_run_g(feeders):
     """
     Runs a single benchmark cycle.
+    Feeders is an array with the form [4, 4, 4]. Each element is a subprocess, and indicates the number of cameras.
     :return:
     """
 
-    # Generate config
-    f = open("/tmp/cams_bench.yml", "w")
-    sb = io.StringIO()
-    sb.write("cams:\n")
-    for i in range(n):
-        sb.write("    cam{}:\n".format(i))
-        sb.write("        img_url: http://localhost:8050/fakewebcam/image.jpg\n")
-        sb.write("        mjpeg_urls: http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg\n")
-        sb.write("        rotate: 0\n")
-        sb.write("        mpeg: False\n")
-        sb.write("        h264: False\n")
-    f.write(sb.getvalue())
-    f.close()
+    n_procs = len(feeders)
 
-    sp = subprocess.run("export CAMS_YML=/tmp/cams_bench.yml && python run.py", shell=True)
-    return sp
+    # Generate configs
+    for p, n in enumerate(feeders):
+        f = open("/tmp/cams_bench_{}.yml".format(p), "w")
+        sb = io.StringIO()
+        sb.write("cams:\n")
+        for i in range(n):
+            sb.write("    cam{}_{}:\n".format(p, i))
+            sb.write("        img_url: http://localhost:8050/fakewebcam/image.jpg\n")
+            sb.write("        mjpeg_urls: http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg\n")
+            sb.write("        rotate: 0\n")
+            sb.write("        mpeg: False\n")
+            sb.write("        h264: False\n")
+        f.write(sb.getvalue())
+        f.close()
+
+    def spawn_subproc():
+        subprocess.run("export CAMS_YML=/tmp/cams_bench_{}.yml && python run.py".format(p), shell=True)
+
+    greenlets = []
+    for p in range(n_procs):
+        gl = gevent.spawn(spawn_subproc)
+        greenlets.append(gl)
+
+    gevent.joinall(greenlets)
+    return
 
 
 def measurements_g():
@@ -80,7 +92,7 @@ def measurements_g():
         gevent.sleep(1)
 
 
-def keep_active_g(n):
+def keep_active_g(feeders):
     """
     Keeps the active flag set in Redis.
     :return:
@@ -95,9 +107,10 @@ def keep_active_g(n):
     lua_fps = rdb.register_script(lua_fps_code)
 
     while True:
-        for i in range(n):
-            cam_key = "{}:cams:cam{}".format(config.REDIS_PREFIX, i)
-            rdb.setex(cam_key + ":active", 30, 1)
+        for p, n in enumerate(feeders):
+            for i in range(n):
+                cam_key = "{}:cams:cam{}_{}".format(config.REDIS_PREFIX, p, i)
+                rdb.setex(cam_key + ":active", 30, 1)
 
         gevent.sleep(3)
 

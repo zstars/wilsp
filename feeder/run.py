@@ -54,6 +54,11 @@ def run():
     # Connect to the redis instance
     rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=True)
 
+    # Clear keys so that the stats are right.
+    for key in rdb.scan_iter("{}:*".format(config.REDIS_PREFIX)):
+        print("Deleting: {}".format(key))
+        rdb.delete(key)
+
     # Create every cam feeder
     for cam_name, cam in cams.items():
         print('Adding cam {0} to the dict'.format(cam_name))

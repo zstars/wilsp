@@ -41,8 +41,8 @@ class ImageRefreshCamFeeder(CamFeeder):
         fails = 0
         while self._active:
 
+            update_start_time = time.time()
             try:
-                update_start_time = time.time()
                 frame = self._grab_frame()
                 frame = self._rotated(frame, self._rotation)
                 self._put_frame(frame)
@@ -56,6 +56,7 @@ class ImageRefreshCamFeeder(CamFeeder):
             intended_period = 1 / self._max_fps  # That's the approximate time a frame should take.
 
             time_left = intended_period - elapsed
+            # print("Time left: {}".format(time_left))
             if time_left < 0:
                 # We are simply not managing to keep up with the intended frame rate, but for this
                 # cam feeder, that is not a (big) problem.

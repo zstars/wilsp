@@ -49,7 +49,7 @@ def benchmark_run_g(n):
     sb.write("cams:\n")
     for i in range(n):
         sb.write("    cam{}:\n".format(i))
-        sb.write("        img_url: http://weblab.deusto.es/website/assets/img/logo.png\n")
+        sb.write("        img_url: http://localhost:8050/fakewebcam/image.jpg\n")
         sb.write("        mjpeg_urls: http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg\n")
         sb.write("        rotate: 0\n")
         sb.write("        mpeg: False\n")

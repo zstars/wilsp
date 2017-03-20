@@ -126,6 +126,8 @@ class MJPEGCamFeeder(CamFeeder):
             raise FrameGrabbingException('Unexpected response: Content type is not a JPEG image')
         content_length = headers.get('content-length')
         if content_length is None:
+            # It seems that content-length is not strictly necessary for mjpeg to work, so maybe we should handle
+            # this case.
             raise FrameGrabbingException('No content-length available')
         content_length = int(content_length)
 

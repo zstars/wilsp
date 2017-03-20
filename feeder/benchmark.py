@@ -30,7 +30,7 @@ rdb = None
 
 
 def benchmark():
-    N = [10, 10, 10, 10]
+    N = [1]
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g)
@@ -53,8 +53,8 @@ def benchmark_run_g(feeders):
         sb.write("cams:\n")
         for i in range(n):
             sb.write("    cam{}_{}:\n".format(p, i))
-            sb.write("        img_url: http://localhost:8050/fakewebcam/image.jpg\n")
-            sb.write("        mjpeg_urls: http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg\n")
+            sb.write("        img_urls: http://localhost:8050/fakewebcam/image.jpg\n")
+            sb.write("        mjpeg_url: http://localhost:8050/fakewebcam/image.mjpeg\n")
             sb.write("        rotate: 0\n")
             sb.write("        mpeg: False\n")
             sb.write("        h264: False\n")

@@ -123,5 +123,5 @@ def generator_mjpeg(tfps):
 
         frame = images[earliest_ts][1]
 
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        yield ('--frame\r\n'
+               'Content-Type: image/jpeg\r\nContent-Length: {}\r\nX-Timestamp: {}\r\n\r\n'.format(len(frame), time.time()).encode() + frame + b'\r\n')

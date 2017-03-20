@@ -30,7 +30,7 @@ rdb = None
 
 
 def benchmark():
-    N = [1]
+    N = [10, 10, 10, 10, 10, 10]
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g)

@@ -28,9 +28,11 @@ benchmark_measurements_greenlet = None
 lua_fps = None  # type: StrictRedis.Script
 rdb = None
 
+ACTIVATE_THEM = False  # If enabled we will set the stream to active in redis. This applies to MJPEG and IMGREFRESH only. It should thus be disabled for H264 benchmarking.
+
 
 def benchmark():
-    N = [10, 10, 10, 10, 10, 10]
+    N = [10, 10, 10]
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g)
@@ -57,7 +59,7 @@ def benchmark_run_g(feeders):
             sb.write("        mjpeg_url: http://localhost:8050/fakewebcam/image.mjpeg\n")
             sb.write("        rotate: 0\n")
             sb.write("        mpeg: False\n")
-            sb.write("        h264: False\n")
+            sb.write("        h264: True\n")
         f.write(sb.getvalue())
         f.close()
 
@@ -106,13 +108,15 @@ def keep_active_g(feeders):
     global lua_fps
     lua_fps = rdb.register_script(lua_fps_code)
 
-    while True:
-        for p, n in enumerate(feeders):
-            for i in range(n):
-                cam_key = "{}:cams:cam{}_{}".format(config.REDIS_PREFIX, p, i)
-                rdb.setex(cam_key + ":active", 30, 1)
+    if ACTIVATE_THEM:
 
-        gevent.sleep(3)
+        while True:
+            for p, n in enumerate(feeders):
+                for i in range(n):
+                    cam_key = "{}:cams:cam{}_{}".format(config.REDIS_PREFIX, p, i)
+                    rdb.setex(cam_key + ":active", 30, 1)
+
+            gevent.sleep(3)
 
 
 benchmark()

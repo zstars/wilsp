@@ -7,6 +7,8 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'this is a secr3t'
     CLIP_DIR = os.environ.get('CLIP_DIR') or os.path.join(basedir, 'data', 'archimedes')
 
+    MJPEG_FPS = 30
+
     @staticmethod
     def init_app(app):
         pass

@@ -68,7 +68,7 @@ def image():
 
 @main.route('/image.mjpeg')
 def mjpeg():
-    tfps = request.values.get("tfps", 5)
+    tfps = request.values.get("tfps", current_app.config["MJPEG_FPS"])
     tfps = int(tfps)
     return Response(stream_with_context(generator_mjpeg(tfps)),
                     mimetype='multipart/x-mixed-replace; boundary=frame')

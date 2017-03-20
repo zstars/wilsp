@@ -30,6 +30,7 @@ PyYAML==3.11
 redis==2.10.5
 requests==2.10.0
 selenium==3.3.1
+setproctitle==1.1.10
 six==1.10.0
 SQLAlchemy==1.0.13
 visitor==0.1.3

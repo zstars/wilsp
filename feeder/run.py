@@ -86,7 +86,7 @@ def run():
             mpeg_cf.start()
 
         if h264 is not None and h264 is True:
-            h264_cf = H264Feeder(rdb, cam_name, mjpeg_url, config.FFMPEG_BIN)
+            h264_cf = H264Feeder(rdb, config.REDIS_PREFIX, cam_name, mjpeg_url, config.FFMPEG_BIN)
             cam_feeders[cam_name + '/h264'] = h264_cf
             h264_cf.start()
 

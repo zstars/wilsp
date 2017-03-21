@@ -32,7 +32,7 @@ ACTIVATE_THEM = False  # If enabled we will set the stream to active in redis. T
 
 
 def benchmark():
-    N = [10, 10, 10]
+    N = [1]
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g)
@@ -90,7 +90,10 @@ def measurements_g():
                                                  mem.total / (1024.0 ** 2)))
         print("CPU: {}".format(psutil.cpu_percent(interval=None, percpu=False)))
         print("Fds and open files: {} {}".format(proc.num_fds(), proc.open_files()))
+
+
         print("Average FPS: {}".format(lua_fps()))
+
         gevent.sleep(1)
 
 

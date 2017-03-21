@@ -42,7 +42,7 @@ lua_ffmpeg_fps = rdb.register_script(code)
 
 
 def benchmark():
-    N = [10, 10, 10]
+    N = [1]
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g)
@@ -106,6 +106,8 @@ def measurements_g():
             print("Average FPS: {}".format(lua_calculated_fps()))
         else:
             print("Average (ffmpeg) FPS: {}".format(lua_ffmpeg_fps()))
+
+        print("Net IO counters: {}".format(psutil.net_io_counters()))
 
         gevent.sleep(1)
 

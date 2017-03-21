@@ -18,7 +18,7 @@ class TestMPEGCamFeeder(FeederTestBase):
     def setUp(self):
         self.rdb = mock_strict_redis_client()
         self.img = open('data/img.jpg', 'rb').read()
-        self.cf = H264Feeder(self.rdb, 'archimedes', 'http://fake.com/video.mjpeg', 'ffmpeg')
+        self.cf = H264Feeder(self.rdb, 'wilsat', 'archimedes', 'http://fake.com/video.mjpeg', 'ffmpeg')
 
         # We mock the subprocess.Popen call to provide our own test stream
         self.popen_patcher = patch('feeder.h264.subprocess.Popen')

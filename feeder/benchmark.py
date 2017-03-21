@@ -28,11 +28,21 @@ benchmark_measurements_greenlet = None
 lua_fps = None  # type: StrictRedis.Script
 rdb = None
 
-ACTIVATE_THEM = False  # If enabled we will set the stream to active in redis. This applies to MJPEG and IMGREFRESH only. It should thus be disabled for H264 benchmarking.
+# FFMPEG mode implies not running the activate on redis; and collecting the fps from redis.
+FFMPEG_MODE = True
+
+# Connect to the redis instance
+rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=True)
+
+# Register Lua scripts
+code = open('lua/calculated_fps.lua', 'r').read()
+lua_calculated_fps = rdb.register_script(code)
+code = open('lua/ffmpeg_fps.lua', 'r').read()
+lua_ffmpeg_fps = rdb.register_script(code)
 
 
 def benchmark():
-    N = [1]
+    N = [10, 10, 10]
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g)
@@ -92,7 +102,10 @@ def measurements_g():
         print("Fds and open files: {} {}".format(proc.num_fds(), proc.open_files()))
 
 
-        print("Average FPS: {}".format(lua_fps()))
+        if not FFMPEG_MODE:
+            print("Average FPS: {}".format(lua_calculated_fps()))
+        else:
+            print("Average (ffmpeg) FPS: {}".format(lua_ffmpeg_fps()))
 
         gevent.sleep(1)
 
@@ -102,16 +115,8 @@ def keep_active_g(feeders):
     Keeps the active flag set in Redis.
     :return:
     """
-    # Connect to the redis instance
-    global rdb
-    rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=True)
 
-    # Register Lua scripts
-    lua_fps_code = open('lua/fps.lua', 'r').read()
-    global lua_fps
-    lua_fps = rdb.register_script(lua_fps_code)
-
-    if ACTIVATE_THEM:
+    if not FFMPEG_MODE:
 
         while True:
             for p, n in enumerate(feeders):

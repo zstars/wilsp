@@ -9,6 +9,8 @@ class Config:
 
     MJPEG_FPS = 30
 
+    # Note that this takes a significant amount of resources, which can affect the benchmark if the
+    # fakewebcamserver is running in the same computer. (It can reduce the FPS from 30 to 25 with only 8 cams).
     EMBED_QR = True
 
     @staticmethod

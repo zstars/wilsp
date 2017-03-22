@@ -37,7 +37,7 @@ rdb = None
 FFMPEG_MODE = False
 
 # Parse QR
-PARSE_QR = False
+PARSE_QR = True
 
 # Connect to the redis instance
 rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=False)
@@ -50,7 +50,7 @@ lua_ffmpeg_fps = rdb.register_script(code)
 
 
 def benchmark():
-    N = [2, 2]
+    N = [5, 5]
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g, N)

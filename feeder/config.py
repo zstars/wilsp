@@ -14,6 +14,8 @@ class Config:
     REDIS_PORT = 6379
     REDIS_DB = 0
 
+    IMAGE_EXPIRE_TIME = 180
+
     @staticmethod
     def init_app(app):
         pass
@@ -30,7 +32,7 @@ class TestingConfig(Config):
 
 
 class ProductionConfig(Config):
-    pass
+    IMAGE_EXPIRE_TIME = 90
 
 config = {
     'development': DevelopmentConfig,

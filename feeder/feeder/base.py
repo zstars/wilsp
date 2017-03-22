@@ -6,6 +6,8 @@ import gevent
 import redis
 from PIL import Image
 
+from feeder import config
+
 
 class CamFeeder(object):
     """
@@ -13,7 +15,7 @@ class CamFeeder(object):
     The base class handles FPS control and activity/inactivity flow, as long as _check_active() is periodically called.
     """
 
-    IMAGE_EXPIRE_TIME = 120
+    IMAGE_EXPIRE_TIME = config.IMAGE_EXPIRE_TIME
     STATS_PUSH_WAIT = 1
     SLEEP_WHEN_INACTIVE = 0.01
 

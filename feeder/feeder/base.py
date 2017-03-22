@@ -13,7 +13,7 @@ class CamFeeder(object):
     The base class handles FPS control and activity/inactivity flow, as long as _check_active() is periodically called.
     """
 
-    IMAGE_EXPIRE_TIME = 10
+    IMAGE_EXPIRE_TIME = 120
     STATS_PUSH_WAIT = 1
     SLEEP_WHEN_INACTIVE = 0.01
 

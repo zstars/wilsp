@@ -36,6 +36,9 @@ rdb = None
 # FFMPEG mode implies not running the activate on redis; and collecting the fps from redis.
 FFMPEG_MODE = False
 
+# Parse QR
+PARSE_QR = False
+
 # Connect to the redis instance
 rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=False)
 
@@ -47,7 +50,7 @@ lua_ffmpeg_fps = rdb.register_script(code)
 
 
 def benchmark():
-    N = [3, 3]
+    N = [2, 2]
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g, N)
@@ -78,12 +81,13 @@ def benchmark_run_g(feeders):
         f.write(sb.getvalue())
         f.close()
 
-    def spawn_subproc():
+    def spawn_subproc(p):
+        print("Spawning: {}".format(p))
         subprocess.run("export CAMS_YML=/tmp/cams_bench_{}.yml && python run.py".format(p), shell=True)
 
     greenlets = []
     for p in range(n_procs):
-        gl = gevent.spawn(spawn_subproc)
+        gl = gevent.spawn(spawn_subproc, p)
         greenlets.append(gl)
 
     gevent.joinall(greenlets)
@@ -103,7 +107,8 @@ def measurements_g(feeders):
     while True:
 
         if not FFMPEG_MODE:
-            lat = calculate_latency(feeders)
+            if PARSE_QR:
+                lat = calculate_latency(feeders)
 
         print("Av: {}. Oc: {}. TPhys: {}".format(mem.available / (1024.0 ** 2), mem.used / (1024.0 ** 2),
                                                  mem.total / (1024.0 ** 2)))
@@ -121,58 +126,57 @@ def measurements_g(feeders):
 
 
 def calculate_latency(feeders):
-    while True:
+    count = 0
+    tot_elapsed = 0
+    frame = None
+    image = None
+    for p, n in enumerate(feeders):
+        for i in range(n):
 
-        count = 0
-        tot_elapsed = 0
-        frame = None
-        image = None
-        for p, n in enumerate(feeders):
-            for i in range(n):
+            cam_key = "{}:cams:cam{}_{}:lastframe".format(config.REDIS_PREFIX, p, i)
 
-                cam_key = "{}:cams:cam{}_{}:lastframe".format(config.REDIS_PREFIX, p, i)
+            try:
 
-                try:
+                frame = rdb.get(cam_key)
+                if frame is None:
+                    print("Could not find such a frame: {}".format(cam_key))
 
-                    frame = rdb.get(cam_key)
-                    if frame is None:
-                        print("Could not find such a frame: {}".format(cam_key))
+                current_time = int(time.time() * 1000)
 
-                    current_time = int(time.time() * 1000)
+                # Note: Opening and parsing the QR takes around 27 ms.
+                image = Image.open(io.BytesIO(frame))
+                image.load()
+                codes = zbarlight.scan_codes('qrcode', image)
 
-                    # Note: Opening and parsing the QR takes around 27 ms.
-                    image = Image.open(io.BytesIO(frame))
-                    image.load()
-                    codes = zbarlight.scan_codes('qrcode', image)
+                if len(codes) != 1:
+                    print("No code in image")
+                    continue
 
-                    if len(codes) != 1:
-                        print("No code in image")
-                        continue
+                code = codes[0]
+                timestamp, crc = code.split(b'|')
+                crc_expected = hex(zlib.crc32(timestamp)).encode('utf-8')
+                if crc != crc_expected:
+                    print("Code was parsed wrong")
+                    print("CRC: {}; expected: {}".format(crc, crc_expected))
+                    continue
 
-                    code = codes[0]
-                    timestamp, crc = code.split(b'|')
-                    crc_expected = hex(zlib.crc32(timestamp)).encode('utf-8')
-                    if crc != crc_expected:
-                        print("Code was parsed wrong")
-                        print("CRC: {}; expected: {}".format(crc, crc_expected))
-                        continue
+                then_time = int(timestamp)
+                elapsed = current_time - then_time
+                count += 1
+                tot_elapsed += elapsed
 
-                    then_time = int(timestamp)
-                    elapsed = current_time - then_time
-                    count += 1
-                    tot_elapsed += elapsed
+            except:
+                if frame is None:
+                    frame = []
+                print("[Exception trying to get latency. FL: {}, {}]".format(len(frame), image))
 
-                except:
-                    if frame is None:
-                        frame = []
-                    print("[Exception trying to get latency. FL: {}, {}]".format(len(frame), image))
+            #print("FRAME LEN: {}".format(len(frame)))
+    if count > 0:
+        print("Elapsed average: {}".format(tot_elapsed / count))
+    else:
+        print("Average not available")
 
-                #print("FRAME LEN: {}".format(len(frame)))
-        if count > 0:
-            print("Elapsed average: {}".format(tot_elapsed / count))
-        else:
-            print("Average not available")
-        gevent.sleep(3)
+    return tot_elapsed / count
 
 
 

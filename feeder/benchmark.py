@@ -14,6 +14,7 @@ import io
 import psutil
 import zbarlight
 from PIL import Image
+import seqfile
 
 from feeder import config
 
@@ -102,26 +103,42 @@ def measurements_g(feeders):
     proc = psutil.Process()
     mem = psutil.virtual_memory()
 
-    gevent.sleep(4)
+    # Prepare for recording results
+    results_file = seqfile.findNextFile(".", "benchmark_results_", ".txt", maxattempts=100)
+    results = open(results_file, "w")
+    results.write("cpu,mem_used,bw,fps,lat\n")
+
+    gevent.sleep(5)
+
+    # Note: The first iteration results should be discarded. They take more time. (Maybe something is initialized).
 
     while True:
 
+        lat = None
         if not FFMPEG_MODE:
             if PARSE_QR:
                 lat = calculate_latency(feeders)
 
-        print("Av: {}. Oc: {}. TPhys: {}".format(mem.available / (1024.0 ** 2), mem.used / (1024.0 ** 2),
-                                                 mem.total / (1024.0 ** 2)))
-        print("CPU: {}".format(psutil.cpu_percent(interval=None, percpu=False)))
-        print("Fds and open files: {} {}".format(proc.num_fds(), proc.open_files()))
+        cpu = psutil.cpu_percent(interval=None, percpu=False)
+        bw = psutil.net_io_counters().bytes_sent
+        mem_used = mem.used / (1024.0 ** 2)
 
         if not FFMPEG_MODE:
-            print("Average FPS: {}".format(lua_calculated_fps()))
+            fps = lua_calculated_fps()
         else:
-            print("Average (ffmpeg) FPS: {}".format(lua_ffmpeg_fps()))
+            fps = lua_ffmpeg_fps()
+        fps = float(fps)
 
-        print("Net IO counters: {}".format(psutil.net_io_counters()))
+        report = "{},{},{},{},{}\n".format(cpu, mem_used, bw, fps, lat)
+        results.write(report)
+        print(report)
 
+        #print("Av: {}. Oc: {}. TPhys: {}".format(mem.available / (1024.0 ** 2), mem.used / (1024.0 ** 2),
+        #                                         mem.total / (1024.0 ** 2)))
+        # print("CPU: {}".format(psutil.cpu_percent(interval=None, percpu=False)))
+        # print("Fds and open files: {} {}".format(proc.num_fds(), proc.open_files()))
+
+        results.flush()
         gevent.sleep(1)
 
 

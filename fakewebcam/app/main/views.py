@@ -1,12 +1,15 @@
 import glob
+import hashlib
 import io
 import os
 import time
 import re
 from bisect import bisect_right
+import zlib
 
 import gevent
 from PIL import Image
+import qrcode
 from flask import render_template, current_app, make_response, Response, request, stream_with_context
 from flask import send_file
 
@@ -63,7 +66,19 @@ def image():
     if earliest_ts < 0:
         earliest_ts = 0
 
-    return send_file(io.BytesIO(images[earliest_ts][1]), mimetype="image/jpg")
+    if not current_app.config["EMBED_QR"]:
+        return send_file(io.BytesIO(images[earliest_ts][1]), mimetype="image/jpg")
+    else:
+        qr = create_qr()
+        img = Image.open(io.BytesIO(images[earliest_ts][1]))
+
+        img.paste(qr)
+
+        img_io = io.BytesIO()
+        img.save(img_io, 'JPEG', quality=70)
+        img_io.seek(0)
+
+        return send_file(img_io, mimetype="image/jpg")
 
 
 @main.route('/image.mjpeg')
@@ -77,6 +92,26 @@ def mjpeg():
 @main.route('/')
 def index():
     return "Fake Webcam 1.0"
+
+
+def create_qr():
+    """
+    Creates a QR image with the current timestamp.
+    :return:
+    """
+    qr = qrcode.QRCode(
+        version=1,
+        box_size=10,
+    )
+    data = str(int(time.time() * 1000))
+    crc = hex(zlib.crc32(data.encode('utf-8')))
+
+    qrdata = "{}|{}".format(data, crc)
+    qr.add_data(qrdata)
+    qr.make(fit=True)
+
+    img = qr.make_image()
+    return img
 
 
 def generator_mjpeg(tfps):

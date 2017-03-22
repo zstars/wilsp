@@ -9,6 +9,8 @@ class Config:
 
     MJPEG_FPS = 30
 
+    EMBED_QR = True
+
     @staticmethod
     def init_app(app):
         pass

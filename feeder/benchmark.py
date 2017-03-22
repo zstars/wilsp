@@ -110,7 +110,9 @@ def measurements_g(feeders):
 
     gevent.sleep(5)
 
-    # Note: The first iteration results should be discarded. They take more time. (Maybe something is initialized).
+    # Note: The first iteration results should be discarded. They are faster.
+
+    iterations = 0
 
     while True:
 
@@ -130,8 +132,11 @@ def measurements_g(feeders):
         fps = float(fps)
 
         report = "{},{},{},{},{}\n".format(cpu, mem_used, bw, fps, lat)
-        results.write(report)
         print(report)
+
+        # Ignore the first two iterations. They have unusually short times.
+        if iterations > 1:
+            results.write(report)
 
         #print("Av: {}. Oc: {}. TPhys: {}".format(mem.available / (1024.0 ** 2), mem.used / (1024.0 ** 2),
         #                                         mem.total / (1024.0 ** 2)))
@@ -139,6 +144,7 @@ def measurements_g(feeders):
         # print("Fds and open files: {} {}".format(proc.num_fds(), proc.open_files()))
 
         results.flush()
+        iterations += 1
         gevent.sleep(1)
 
 

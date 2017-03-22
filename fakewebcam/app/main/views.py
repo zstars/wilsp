@@ -158,5 +158,17 @@ def generator_mjpeg(tfps):
 
         frame = images[earliest_ts][1]
 
+        if current_app.config["EMBED_QR"]:
+            qr = create_qr()
+            img = Image.open(io.BytesIO(frame))
+
+            img.paste(qr)
+
+            img_io = io.BytesIO()
+            img.save(img_io, 'JPEG', quality=70)
+            img_io.seek(0)
+
+            frame = img_io.getvalue()
+
         yield ('--frame\r\n'
                'Content-Type: image/jpeg\r\nContent-Length: {}\r\nX-Timestamp: {}\r\n\r\n'.format(len(frame), time.time()).encode() + frame + b'\r\n')

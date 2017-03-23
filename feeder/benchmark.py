@@ -108,7 +108,8 @@ def measurements_g(feeders):
     results = open(results_file, "w")
     results.write("cpu,mem_used,bw,fps,lat\n")
 
-    gevent.sleep(5)
+    # 5 seconds plus half a second for each feeder.
+    gevent.sleep(5+sum(feeders)*0.5)
 
     # Note: The first iteration results should be discarded. They are faster.
 

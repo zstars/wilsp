@@ -10,7 +10,6 @@ olefile==0.44
 packaging==16.8
 pbr==1.10.0
 Pillow==4.0.0
-pkg-resources==0.0.0
 psutil==5.2.0
 pyparsing==2.2.0
 python-dateutil==2.6.0

@@ -4,7 +4,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
 
-    FFMPEG_BIN = "/usr/bin/ffmpeg"
+    FFMPEG_BIN = os.environ.get("FFMPEG_BIN", "/usr/bin/ffmpeg")
 
     # Path to the cams definition file
     CAMS_YML = os.environ.get("CAMS_YML", None)

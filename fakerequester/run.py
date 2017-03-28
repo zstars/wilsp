@@ -1,12 +1,20 @@
 import gevent
-import time
 from gevent import monkey
-
 monkey.patch_all()
-import requests
 
-N = 20
-TFPS = 30
+import requests
+import time
+from socketIO_client import SocketIO, LoggingNamespace
+
+from config import config as config_dict
+config = config_dict['development']
+
+import logging
+
+logging.getLogger('socketIO-client').setLevel(logging.DEBUG)
+logging.basicConfig()
+
+
 
 threadlets = []
 
@@ -14,13 +22,25 @@ URL = "http://localhost:5000/exps/imgrefresh/cam0_0"
 
 
 def main():
-    for i in range(N):
+    for i in range(config.NUMBER):
         # Start worker threadlets
-        threadlets.append(gevent.spawn(run_g))
+
+        if config.TYPE == "img":
+            threadlets.append(gevent.spawn(run_img_g))
+        elif config.TYPE == "sio":
+            threadlets.append(gevent.spawn(run_sio_g))
+
     gevent.joinall(threadlets)
 
 
-def run_g():
+def run_sio_g():
+
+    with SocketIO('localhost', 8000, LoggingNamespace) as socketIO:
+        socketIO.emit('aaa')
+        socketIO.wait(seconds=1)
+
+
+def run_img_g():
     started_time = time.time()
     count_frames = 0
 
@@ -32,7 +52,7 @@ def run_g():
         count_frames += 1
 
         elapsed = time.time() - update_start_time
-        intended_period = 1 / TFPS  # That's the approximate time a frame should take.
+        intended_period = 1 / config.TFPS  # That's the approximate time a frame should take.
 
         time_left = intended_period - elapsed
         # print("Time left: {}".format(time_left))
@@ -45,6 +65,5 @@ def run_g():
 
         if count_frames % 100 == 0:
             print("FPS: {}".format(count_frames / (time.time() - started_time)))
-
 
 main()

@@ -33,9 +33,17 @@ class CamNamespace(BaseNamespace):
     def on_disconnect(self):
         print('[Disconnected]')
 
-    def on_stream(self, event, *args):
-        print('[Event]: {}'.format(event))
-
+    # def on_stream(self, event, *args):
+    #     print('[Event]: {}'.format(event))
+    #
+    # def on_stream_response(self, *args):
+    #     print("ON stream response {}".format(args))
+    #
+    # def on_cmd_response(self, *args):
+    #     print("ON cmd response {}".format(args))
+    #
+    # def on_init_response(self, *args):
+    #     print("ON init response {}".format(args))
 
 
 def main():
@@ -52,16 +60,9 @@ def main():
 
 def run_sio_g():
 
-    socketIO = SocketIO('localhost', 5000)
+    socketIO = SocketIO('localhost', 5000, CamNamespace)
     cam_namespace = socketIO.define(CamNamespace, '/h264')
-
     cam_namespace.emit('start', {'cam': 'cam0_0'})
-
-    socketIO.on('connect', cam_namespace.on_connect)
-    socketIO.on('disconnect', cam_namespace.on_disconnect)
-    socketIO.on('reconnect', cam_namespace.on_reconnect)
-    socketIO.on('stream', cam_namespace.on_stream)
-
     socketIO.wait(seconds=30)
 
     print("Out")

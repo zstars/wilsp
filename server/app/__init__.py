@@ -8,7 +8,7 @@ from flask.ext.mail import Mail
 from flask.ext.moment import Moment
 from flask.ext.redis import FlaskRedis
 
-from old.config import config
+from config import config
 
 bootstrap = Bootstrap()
 mail = Mail()

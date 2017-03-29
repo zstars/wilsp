@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "request": "^2.81.0",
     "socket.io-client": "^1.7.3"
   },
   "devDependencies": {},

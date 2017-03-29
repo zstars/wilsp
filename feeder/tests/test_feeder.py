@@ -1,10 +1,10 @@
 import unittest
+
 import gevent
-
 from tests.base import FeederTestBase
-import run
 
-from run import REDIS_PREFIX
+from old import run
+from old.run import REDIS_PREFIX
 
 
 class TestWatchdog(FeederTestBase):

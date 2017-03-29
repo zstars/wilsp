@@ -1,12 +1,14 @@
 import gevent
 from gevent import monkey
+
 monkey.patch_all()
 
 import requests
 import time
-from socketIO_client import SocketIO, LoggingNamespace, BaseNamespace
+from socketIO_client import SocketIO, BaseNamespace
 
-from config import config as config_dict
+from old.config import config as config_dict
+
 config = config_dict['development']
 
 import logging
@@ -14,16 +16,12 @@ import logging
 logging.getLogger('socketIO-client').setLevel(logging.DEBUG)
 logging.basicConfig()
 
-
-
 threadlets = []
 
 URL = "http://localhost:5000/exps/imgrefresh/cam0_0"
 
 
-
 class CamNamespace(BaseNamespace):
-
     def on_connect(self):
         print('[Connected]')
 
@@ -33,17 +31,17 @@ class CamNamespace(BaseNamespace):
     def on_disconnect(self):
         print('[Disconnected]')
 
-    # def on_stream(self, event, *args):
-    #     print('[Event]: {}'.format(event))
-    #
-    # def on_stream_response(self, *args):
-    #     print("ON stream response {}".format(args))
-    #
-    # def on_cmd_response(self, *args):
-    #     print("ON cmd response {}".format(args))
-    #
-    # def on_init_response(self, *args):
-    #     print("ON init response {}".format(args))
+        # def on_stream(self, event, *args):
+        #     print('[Event]: {}'.format(event))
+        #
+        # def on_stream_response(self, *args):
+        #     print("ON stream response {}".format(args))
+        #
+        # def on_cmd_response(self, *args):
+        #     print("ON cmd response {}".format(args))
+        #
+        # def on_init_response(self, *args):
+        #     print("ON init response {}".format(args))
 
 
 def main():
@@ -59,7 +57,6 @@ def main():
 
 
 def run_sio_g():
-
     socketIO = SocketIO('localhost', 5000, CamNamespace)
     cam_namespace = socketIO.define(CamNamespace, '/h264')
     cam_namespace.emit('start', {'cam': 'cam0_0'})
@@ -93,5 +90,6 @@ def run_img_g():
 
         if count_frames % 100 == 0:
             print("FPS: {}".format(count_frames / (time.time() - started_time)))
+
 
 main()

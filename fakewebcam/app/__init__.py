@@ -1,6 +1,6 @@
-
 from flask import Flask
-from config import config
+
+from old.config import config
 
 
 def create_app(config_name):

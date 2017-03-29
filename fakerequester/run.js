@@ -4,7 +4,7 @@ var request = require('request');
 var number = 1;
 var type = "img";
 
-var IMG_URL = "http://localhost:5000/exps/imgrefresh/cam0_0"
+var IMG_URL = "http://localhost:5000/cams/cam0_0";
 
 if(process.argv.length == 4) {
     number = parseInt(process.argv[2]);
@@ -43,19 +43,23 @@ for(var i = 0; i < number; i++) {
         (function() {
             var period = 1000 / 30; // 30 FPS target
             var count = 0;
+            var errors = 0;
             var programStartTime = Date.now();
 
             var cycle = function () {
                 var updateStartTime = Date.now();
                 (function () {
                     request(IMG_URL, function (error, response, body) {
-                        count++;
+                        if(error)
+                            errors += 1;
+                        else
+                            count++;
                         var elapsed = Date.now() - updateStartTime;
                         var time_left = period - elapsed;
 
                         setTimeout(cycle, time_left);
 
-                        console.log("Frames: " + count.toString() + " | FPS: " + (count / ((Date.now() - programStartTime) / 1000)).toString());
+                        console.log("Frames: " + count.toString() + " | FPS: " + (count / ((Date.now() - programStartTime) / 1000)).toString() + " | Errors: " + errors.toString());
                     });
                 })();
             };

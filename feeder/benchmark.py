@@ -1,3 +1,5 @@
+from optparse import OptionParser
+
 import gevent
 import redis
 import time
@@ -34,11 +36,10 @@ benchmark_measurements_greenlet = None
 lua_fps = None  # type: StrictRedis.Script
 rdb = None
 
-# FFMPEG mode implies not running the activate on redis; and collecting the fps from redis.
-FFMPEG_MODE = False
+CLIENTS_PER_PROCESS = 5  # Max number of clients per process
 
 # Parse QR
-PARSE_QR = True
+PARSE_QR = False
 
 # Connect to the redis instance
 rdb = redis.StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, db=config.REDIS_DB, decode_responses=False)
@@ -50,17 +51,39 @@ code = open('lua/ffmpeg_fps.lua', 'r').read()
 lua_ffmpeg_fps = rdb.register_script(code)
 
 
-def benchmark():
-    N = [5, 5]
+def run(clients, format, measurements):
+
+    # Generate the clients organization [proc1_clients, ..., procn_clients]
+    # 5 clients per processor.
+    N = []
+    full_procs = clients // CLIENTS_PER_PROCESS
+    rem_procs = clients % CLIENTS_PER_PROCESS
+    for i in range(full_procs):
+        N.append(CLIENTS_PER_PROCESS)
+
+    if rem_procs > 0:
+        N.append(rem_procs)
+
+    print("Array of clients per process: {}".format(N))
+
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
-    benchmark_measurements_greenlet = gevent.spawn(measurements_g, N)
-    benchmark_keep_active_greenlet = gevent.spawn(keep_active_g, N)
+    benchmark_measurements_greenlet = gevent.spawn(measurements_g, measurements, format)
+
+    if format == "img":
+            benchmark_keep_active_greenlet = gevent.spawn(keep_active_g, format)
+
+    # Run until the specified number of measurements are taken.
+    benchmark_measurements_greenlet.join()
+    gevent.kill(benchmark_runner_greenlet)
+    gevent.kill(benchmark_keep_active_greenlet)
+
+    print("Run finished")
 
 
 def benchmark_run_g(feeders):
     """
-    Runs a single benchmark cycle.
+    Runs the feeder subprocesses for benchmarking.
     Feeders is an array with the form [4, 4, 4]. Each element is a subprocess, and indicates the number of cameras.
     :return:
     """
@@ -95,9 +118,9 @@ def benchmark_run_g(feeders):
     return
 
 
-def measurements_g(feeders):
+def measurements_g(feeders, measurements, format):
     """
-    Measures the CPU, RAM and network usage.
+    Measures the CPU, RAM and network usage. Stops when the specified number of measurements are taken.
     :return:
     """
     proc = psutil.Process()
@@ -115,37 +138,44 @@ def measurements_g(feeders):
 
     iterations = 0
 
-    while True:
+    measurements_done = 0
+    measurements_failed = 0
 
-        lat = None
-        if not FFMPEG_MODE:
-            if PARSE_QR:
-                lat = calculate_latency(feeders)
+    while measurements_done < measurements:
 
-        cpu = psutil.cpu_percent(interval=None, percpu=False)
-        bw = psutil.net_io_counters().bytes_sent
-        mem_used = mem.used / (1024.0 ** 2)
+        try:
+            lat = None
+            if format == "img":
+                if PARSE_QR:
+                    lat = calculate_latency(feeders)
 
-        if not FFMPEG_MODE:
-            fps = lua_calculated_fps()
-        else:
-            fps = lua_ffmpeg_fps()
-        fps = float(fps)
+            cpu = psutil.cpu_percent(interval=None, percpu=False)
+            bw = psutil.net_io_counters().bytes_sent
+            mem_used = mem.used / (1024.0 ** 2)
 
-        report = "{},{},{},{},{}\n".format(cpu, mem_used, bw, fps, lat)
-        print(report)
+            if format == "img":
+                fps = lua_calculated_fps()
+            else: # h264
+                fps = lua_ffmpeg_fps()
+            fps = float(fps)
 
-        # Ignore the first two iterations. They have unusually short times.
-        if iterations > 1:
-            results.write(report)
+            report = "{},{},{},{},{}\n".format(cpu, mem_used, bw, fps, lat)
+            print(report)
 
-        #print("Av: {}. Oc: {}. TPhys: {}".format(mem.available / (1024.0 ** 2), mem.used / (1024.0 ** 2),
-        #                                         mem.total / (1024.0 ** 2)))
-        # print("CPU: {}".format(psutil.cpu_percent(interval=None, percpu=False)))
-        # print("Fds and open files: {} {}".format(proc.num_fds(), proc.open_files()))
+            # Ignore the first 4 iterations. They have unusually short times.
+            if iterations > 4:
+                results.write(report)
 
-        results.flush()
-        iterations += 1
+            results.flush()
+            iterations += 1
+            measurements_done += 1
+        except:
+            print("Error taking measurement")
+            measurements_failed += 1
+            if measurements_failed > 10:
+                print("Abort.")
+                break
+
         gevent.sleep(1)
 
 
@@ -203,15 +233,13 @@ def calculate_latency(feeders):
     return tot_elapsed / count
 
 
-
-def keep_active_g(feeders):
+def keep_active_g(feeders, format):
     """
     Keeps the active flag set in Redis.
     :return:
     """
 
-    if not FFMPEG_MODE:
-
+    if format == "img":
         while True:
             for p, n in enumerate(feeders):
                 for i in range(n):
@@ -220,8 +248,21 @@ def keep_active_g(feeders):
 
             gevent.sleep(3)
 
+if __name__ == "__main__":
 
-benchmark()
+    parser = OptionParser()
+    parser.add_option("-c", "--clients", type="int", dest="clients", default=10, help="Number of clients to simulate")
+    parser.add_option("-f", "--format", type="string", dest="format", default="img", help="img or h264 mode")
+    parser.add_option("-n", "--measurements", type="int", dest="measurements", default=15, help="Number of measurements to take")
 
-# Run for a fixed time
-benchmark_runner_greenlet.join(120)
+    (options, args) = parser.parse_args()
+
+    if options.format not in ("img", "format"):
+        parser.print_usage()
+        exit(1)
+
+    if options.clients <= 0:
+        parser.print_usage()
+        exit(1)
+
+    run(options.clients, options.format, options.measurements)

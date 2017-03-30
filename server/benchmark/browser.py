@@ -5,17 +5,20 @@ This module uses Selenium to open a Chrome and obtain latency information automa
 import gevent
 import zlib
 from gevent import monkey
+from seqfile import seqfile
+
 monkey.patch_all()
 
 from PIL import Image
 import zbarlight
 
-import io
 import time
-
-URL = "http://localhost:5000/exps/imgrefresh/cam0_0"
-
+from optparse import OptionParser
 from selenium import webdriver
+
+
+DEFAULT_URL = "http://localhost:5000/exps/imgrefresh/cam0_0"
+DEFAULT_TIMES = 15
 
 driver = None  # Selenium webdriver
 
@@ -50,28 +53,65 @@ def calculate_elapsed(current_time, snapshot_path):
     return elapsed
 
 
-def background_g():
-    while True:
-        gevent.sleep(4)
+def background_g(times):
 
-        current_time = time.time()
+    # Prepare for recording results
+    results_file = seqfile.findNextFile(".", "browser_benchmark_results_", ".txt", maxattempts=100)
+    results = open(results_file, "w")
+    results.write("lat\n")
 
-        driver.save_screenshot('snapshot.jpeg')
+    # Results recorded
+    num_results = 0
 
-        elapsed = calculate_elapsed(int(current_time * 1000), 'snapshot.jpeg')
+    num_failures = 0
 
-        print("ELAPSED: {}".format(elapsed))
+    while num_results < times:
+        try:
+            gevent.sleep(4)
 
-def run():
+            current_time = time.time()
+
+            driver.save_screenshot('snapshot.jpeg')
+
+            elapsed = calculate_elapsed(int(current_time * 1000), 'snapshot.jpeg')
+
+            print("ELAPSED: {}".format(elapsed))
+
+            results.write("{}\n".format(elapsed))
+            results.flush()
+
+            num_results += 1
+            num_failures = 0
+        except:
+            print("Error measuring elapsed time. Retrying.")
+            num_failures += 1
+            if num_failures > 5:
+                print("Aborting.")
+                break
+
+    results.close()
+
+
+def run(url, times):
 
     global driver
 
-    glet = gevent.spawn(background_g)
+    glet = gevent.spawn(background_g, times)
 
     driver = webdriver.Chrome()
-    driver.get(URL)
+    driver.get(url)
 
-    glet.join(120)
+    glet.join()
+
+    driver.close()
+
 
 if __name__ == "__main__":
-    run()
+
+    parser = OptionParser()
+    parser.add_option("-u", "--url", default=DEFAULT_URL, dest="url")
+    parser.add_option("-t", "--times", type="int", default=DEFAULT_TIMES, dest="times")
+
+    (options, args) = parser.parse_args()
+
+    run(options.url, options.times)

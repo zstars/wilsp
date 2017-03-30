@@ -1,3 +1,4 @@
+from greenlet import GreenletExit
 from optparse import OptionParser
 
 import gevent
@@ -75,10 +76,15 @@ def run(clients, format, measurements):
 
     # Run until the specified number of measurements are taken.
     benchmark_measurements_greenlet.join()
-    gevent.kill(benchmark_runner_greenlet)
+    gevent.kill(benchmark_runner_greenlet, exception=GreenletExit)
     gevent.kill(benchmark_keep_active_greenlet)
 
     print("Run finished")
+
+    benchmark_runner_greenlet.join()
+    benchmark_keep_active_greenlet.join()
+
+    print("Out")
 
 
 def benchmark_run_g(feeders):
@@ -88,31 +94,40 @@ def benchmark_run_g(feeders):
     :return:
     """
 
-    n_procs = len(feeders)
+    try:
 
-    # Generate configs
-    for p, n in enumerate(feeders):
-        f = open("/tmp/cams_bench_{}.yml".format(p), "w")
-        sb = io.StringIO()
-        sb.write("cams:\n")
-        for i in range(n):
-            sb.write("    cam{}_{}:\n".format(p, i))
-            sb.write("        img_urls: http://localhost:8050/fakewebcam/image.jpg\n")
-            sb.write("        mjpeg_url: http://localhost:8050/fakewebcam/image.mjpeg\n")
-            sb.write("        rotate: 0\n")
-            sb.write("        mpeg: False\n")
-            sb.write("        h264: False\n")
-        f.write(sb.getvalue())
-        f.close()
+        n_procs = len(feeders)
 
-    def spawn_subproc(p):
-        print("Spawning: {}".format(p))
-        subprocess.run("export CAMS_YML=/tmp/cams_bench_{}.yml && python run.py".format(p), shell=True)
+        # Generate configs
+        for p, n in enumerate(feeders):
+            f = open("/tmp/cams_bench_{}.yml".format(p), "w")
+            sb = io.StringIO()
+            sb.write("cams:\n")
+            for i in range(n):
+                sb.write("    cam{}_{}:\n".format(p, i))
+                sb.write("        img_urls: http://localhost:8050/fakewebcam/image.jpg\n")
+                sb.write("        mjpeg_url: http://localhost:8050/fakewebcam/image.mjpeg\n")
+                sb.write("        rotate: 0\n")
+                sb.write("        mpeg: False\n")
+                sb.write("        h264: False\n")
+            f.write(sb.getvalue())
+            f.close()
 
-    greenlets = []
-    for p in range(n_procs):
-        gl = gevent.spawn(spawn_subproc, p)
-        greenlets.append(gl)
+        def spawn_subproc(p):
+            print("Spawning: {}".format(p))
+            subprocess.run("export CAMS_YML=/tmp/cams_bench_{}.yml && python run.py".format(p), shell=True)
+
+        greenlets = []
+        for p in range(n_procs):
+            gl = gevent.spawn(spawn_subproc, p)
+            greenlets.append(gl)
+
+        gevent.joinall(greenlets)
+
+    except GreenletExit:
+        print("Subprocesses out")
+        for g in greenlets:
+            g.kill()
 
     return
 

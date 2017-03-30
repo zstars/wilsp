@@ -2,6 +2,9 @@ from greenlet import GreenletExit
 from optparse import OptionParser
 
 import gevent
+import itertools
+
+import math
 import redis
 import time
 
@@ -33,6 +36,7 @@ print(os.getcwd())
 
 benchmark_runner_greenlet = None
 benchmark_measurements_greenlet = None
+benchmark_keep_active_greenlet = None
 
 lua_fps = None  # type: StrictRedis.Script
 rdb = None
@@ -54,6 +58,8 @@ lua_ffmpeg_fps = rdb.register_script(code)
 
 def run(clients, format, measurements):
 
+    print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
+
     # Generate the clients organization [proc1_clients, ..., procn_clients]
     # 5 clients per processor.
     N = []
@@ -65,10 +71,8 @@ def run(clients, format, measurements):
     if rem_procs > 0:
         N.append(rem_procs)
 
-    print("Array of clients per process: {}".format(N))
-
-    global benchmark_runner_greenlet, benchmark_measurements_greenlet
-    benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
+    global benchmark_runner_greenlet, benchmark_measurements_greenlet, benchmark_keep_active_greenlet
+    benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N, format)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g, N, measurements, format)
 
     if format == "img":
@@ -77,17 +81,21 @@ def run(clients, format, measurements):
     # Run until the specified number of measurements are taken.
     benchmark_measurements_greenlet.join()
     gevent.kill(benchmark_runner_greenlet, exception=GreenletExit)
-    gevent.kill(benchmark_keep_active_greenlet)
 
-    print("Run finished")
+    if benchmark_keep_active_greenlet is not None:
+        gevent.kill(benchmark_keep_active_greenlet)
 
     benchmark_runner_greenlet.join()
-    benchmark_keep_active_greenlet.join()
 
-    print("Out")
+    if benchmark_keep_active_greenlet is not None:
+        benchmark_keep_active_greenlet.join()
+
+    benchmark_keep_active_greenlet = None
+
+    print("Run done.")
 
 
-def benchmark_run_g(feeders):
+def benchmark_run_g(feeders, format):
     """
     Runs the feeder subprocesses for benchmarking.
     Feeders is an array with the form [4, 4, 4]. Each element is a subprocess, and indicates the number of cameras.
@@ -109,12 +117,14 @@ def benchmark_run_g(feeders):
                 sb.write("        mjpeg_url: http://localhost:8050/fakewebcam/image.mjpeg\n")
                 sb.write("        rotate: 0\n")
                 sb.write("        mpeg: False\n")
-                sb.write("        h264: False\n")
+                if format == "img":
+                    sb.write("        h264: False\n")
+                else:
+                    sb.write("        h264: True\n")
             f.write(sb.getvalue())
             f.close()
 
         def spawn_subproc(p):
-            print("Spawning: {}".format(p))
             subprocess.run("export CAMS_YML=/tmp/cams_bench_{}.yml && python run.py".format(p), shell=True)
 
         greenlets = []
@@ -125,7 +135,6 @@ def benchmark_run_g(feeders):
         gevent.joinall(greenlets)
 
     except GreenletExit:
-        print("Subprocesses out")
         for g in greenlets:
             g.kill()
 
@@ -149,7 +158,7 @@ def measurements_g(feeders, measurements, format):
     results.write("cpu,mem_used,bw,fps,lat\n")
 
     # 5 seconds plus half a second for each feeder.
-    gevent.sleep(5+sum(feeders)*0.5)
+    gevent.sleep(3+sum(feeders)*0.25)
 
     # Note: The first iteration results should be discarded. They are faster.
 
@@ -157,6 +166,8 @@ def measurements_g(feeders, measurements, format):
 
     measurements_done = 0
     measurements_failed = 0
+
+    INIT_ITERATIONS = 4
 
     while measurements_done < measurements:
 
@@ -177,15 +188,20 @@ def measurements_g(feeders, measurements, format):
             fps = float(fps)
 
             report = "{},{},{},{},{}\n".format(cpu, mem_used, bw, fps, lat)
-            print(report)
 
             # Ignore the first 4 iterations. They have unusually short times.
-            if iterations > 4:
+            if iterations > INIT_ITERATIONS:
+                if math.isnan(fps):
+                    raise Exception("Latency is not valid")
                 results.write(report)
+                print(report)
+                results.flush()
+                measurements_done += 1
+            else:
+                print("[INIT ONLY] " + report)
 
-            results.flush()
             iterations += 1
-            measurements_done += 1
+
         except:
             print("Error taking measurement")
             measurements_failed += 1
@@ -269,12 +285,13 @@ if __name__ == "__main__":
 
     parser = OptionParser()
     parser.add_option("-c", "--clients", type="int", dest="clients", default=10, help="Number of clients to simulate")
-    parser.add_option("-f", "--format", type="string", dest="format", default="img", help="img or h264 mode")
+    parser.add_option("-f", "--format", type="string", dest="format", default="img", help="img, h264, or all mode")
     parser.add_option("-n", "--measurements", type="int", dest="measurements", default=15, help="Number of measurements to take")
+    parser.add_option("-a", "--all", dest="all", default=False, action="store_true", help="Execute the benchmark multiple times for a different number of clients up to the specified one")
 
     (options, args) = parser.parse_args()
 
-    if options.format not in ("img", "format"):
+    if options.format not in ("img", "h264", "all"):
         parser.print_usage()
         exit(1)
 
@@ -282,4 +299,21 @@ if __name__ == "__main__":
         parser.print_usage()
         exit(1)
 
-    run(options.clients, options.format, options.measurements)
+    formats = []
+    if options.format == "img":
+        formats = ["img"]
+    elif options.format == "h264":
+        formats = ["h265"]
+    elif options.format == "all":
+        formats = ["img", "h264"]
+
+    if options.all:
+        client_numbers = range(1, options.clients)
+    else:
+        client_numbers = [options.clients]
+
+    # Program the benchmarks for the client and format combination
+    benchmark_runs = itertools.product(client_numbers, formats)
+
+    for br in benchmark_runs:
+        run(br[0], br[1], options.measurements)

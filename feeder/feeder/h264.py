@@ -114,6 +114,10 @@ class H264Feeder(object):
                                 avg = sum(fps_list) / len(fps_list)
                                 fps_list = []
                                 self._rdb.setex(fps_key, 30, avg)
+                                # print("FPS: {}".format(avg))
+                        else:
+                            pass
+                            # print("FPS not found in: {}".format(line))
                     except:
                         traceback.print_exc()
                 err.close()

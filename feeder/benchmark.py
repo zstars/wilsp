@@ -10,7 +10,7 @@ from gevent import monkey
 monkey.patch_all()
 
 import os
-import subprocess
+from gevent import subprocess
 import io
 
 import psutil
@@ -68,10 +68,10 @@ def run(clients, format, measurements):
 
     global benchmark_runner_greenlet, benchmark_measurements_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N)
-    benchmark_measurements_greenlet = gevent.spawn(measurements_g, measurements, format)
+    benchmark_measurements_greenlet = gevent.spawn(measurements_g, N, measurements, format)
 
     if format == "img":
-            benchmark_keep_active_greenlet = gevent.spawn(keep_active_g, format)
+            benchmark_keep_active_greenlet = gevent.spawn(keep_active_g, N, format)
 
     # Run until the specified number of measurements are taken.
     benchmark_measurements_greenlet.join()
@@ -114,13 +114,15 @@ def benchmark_run_g(feeders):
         gl = gevent.spawn(spawn_subproc, p)
         greenlets.append(gl)
 
-    gevent.joinall(greenlets)
     return
 
 
 def measurements_g(feeders, measurements, format):
     """
     Measures the CPU, RAM and network usage. Stops when the specified number of measurements are taken.
+    @param feeders: Array of clients per process. E.g., [2, 2, 1]
+    @param measurements: Measurements to take
+    @param format: img or h264
     :return:
     """
     proc = psutil.Process()

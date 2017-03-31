@@ -124,19 +124,26 @@ def benchmark_run_g(feeders, format):
             f.write(sb.getvalue())
             f.close()
 
+        procs = []
+
         def spawn_subproc(p):
-            subprocess.run("export CAMS_YML=/tmp/cams_bench_{}.yml && python run.py".format(p), shell=True)
+            proc = subprocess.Popen("export CAMS_YML=/tmp/cams_bench_{}.yml && python run.py".format(p), shell=True, preexec_fn=os.setsid)
+            procs.append(proc)
 
         greenlets = []
         for p in range(n_procs):
             gl = gevent.spawn(spawn_subproc, p)
             greenlets.append(gl)
 
-        gevent.joinall(greenlets)
+        while True:
+            gevent.sleep(2)
 
     except GreenletExit:
         for g in greenlets:
             g.kill()
+        for p in procs:
+            os.killpg(os.getpgid(p.pid), gevent.signal.SIGTERM)
+        gevent.sleep(2)
 
     return
 

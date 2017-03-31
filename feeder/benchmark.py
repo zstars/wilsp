@@ -56,7 +56,7 @@ code = open('lua/ffmpeg_fps.lua', 'r').read()
 lua_ffmpeg_fps = rdb.register_script(code)
 
 
-def run(clients, format, measurements):
+def run(clients, format, measurements, file):
 
     print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
 
@@ -73,7 +73,7 @@ def run(clients, format, measurements):
 
     global benchmark_runner_greenlet, benchmark_measurements_greenlet, benchmark_keep_active_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N, format)
-    benchmark_measurements_greenlet = gevent.spawn(measurements_g, N, measurements, format)
+    benchmark_measurements_greenlet = gevent.spawn(measurements_g, N, measurements, format, file)
 
     if format == "img":
             benchmark_keep_active_greenlet = gevent.spawn(keep_active_g, N, format)
@@ -148,21 +148,22 @@ def benchmark_run_g(feeders, format):
     return
 
 
-def measurements_g(feeders, measurements, format):
+def measurements_g(feeders, measurements, format, file):
     """
     Measures the CPU, RAM and network usage. Stops when the specified number of measurements are taken.
     @param feeders: Array of clients per process. E.g., [2, 2, 1]
     @param measurements: Measurements to take
     @param format: img or h264
+    @param file: File to write the results to
     :return:
     """
+    total_feeders = sum(feeders)
+
     proc = psutil.Process()
     mem = psutil.virtual_memory()
 
     # Prepare for recording results
-    results_file = seqfile.findNextFile(".", "benchmark_results_", ".txt", maxattempts=100)
-    results = open(results_file, "w")
-    results.write("cpu,mem_used,bw,fps,lat\n")
+    results = file
 
     # 5 seconds plus half a second for each feeder.
     gevent.sleep(3+sum(feeders)*0.25)
@@ -194,7 +195,7 @@ def measurements_g(feeders, measurements, format):
                 fps = lua_ffmpeg_fps()
             fps = float(fps)
 
-            report = "{},{},{},{},{}\n".format(cpu, mem_used, bw, fps, lat)
+            report = "{},{},{},{},{},{},{}\n".format(total_feeders, format, cpu, mem_used, bw, fps, lat)
 
             # Ignore the first 4 iterations. They have unusually short times.
             if iterations > INIT_ITERATIONS:
@@ -295,6 +296,7 @@ if __name__ == "__main__":
     parser.add_option("-f", "--format", type="string", dest="format", default="img", help="img, h264, or all mode")
     parser.add_option("-n", "--measurements", type="int", dest="measurements", default=15, help="Number of measurements to take")
     parser.add_option("-a", "--all", dest="all", default=False, action="store_true", help="Execute the benchmark multiple times for a different number of clients up to the specified one")
+    parser.add_option("-l", "--label", dest="label", default="bm_", help="Label for the result files")
 
     (options, args) = parser.parse_args()
 
@@ -315,12 +317,20 @@ if __name__ == "__main__":
         formats = ["img", "h264"]
 
     if options.all:
-        client_numbers = range(1, options.clients)
+        client_numbers = range(1, options.clients+1)
     else:
         client_numbers = [options.clients]
 
     # Program the benchmarks for the client and format combination
     benchmark_runs = itertools.product(client_numbers, formats)
 
+    # Open the file for storing the results
+    results_file = seqfile.findNextFile(".", options.label, ".txt", maxattempts=100)
+
+    results = open(results_file, "w")
+    results.write("clients,format,cpu,mem_used,bw,fps,lat\n")
+
     for br in benchmark_runs:
-        run(br[0], br[1], options.measurements)
+        run(br[0], br[1], options.measurements, results)
+
+    results.close()

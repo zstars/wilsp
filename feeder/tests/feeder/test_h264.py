@@ -13,7 +13,7 @@ dname = os.path.dirname(abspath)
 os.chdir(os.path.join(dname, '..'))
 
 
-class TestMPEGCamFeeder(FeederTestBase):
+class TestH264CamFeeder(FeederTestBase):
 
     def setUp(self):
         self.rdb = mock_strict_redis_client()

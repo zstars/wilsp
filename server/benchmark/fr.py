@@ -3,6 +3,9 @@ To manage the fakerequesters for the benchmark.
 
 Fake Requester instances need to be started in a different computer, and on-demand. So they need to be
 managed using paramiko or fabric or similar.
+
+The remote computer needs to have everything ready:
+The fakerequester in a path, and node ready to use.
 """
 
 from fabric.api import env, run, execute, hosts

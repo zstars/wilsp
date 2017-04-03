@@ -5,7 +5,8 @@
   "main": "index.js",
   "dependencies": {
     "request": "^2.81.0",
-    "socket.io-client": "^1.7.3"
+    "socket.io-client": "^1.7.3",
+    "yargs": "^7.0.2"
   },
   "devDependencies": {},
   "scripts": {

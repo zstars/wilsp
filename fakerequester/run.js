@@ -1,29 +1,35 @@
 var io = require('socket.io-client');
 var request = require('request');
+var argv = require('yargs')
+	.usage('Usage: $0 -w [num] -u [u] -t [type]')
+    .demandOption(['w'])
+    .default({ u: "localhost:5000", t: "img"})
+    .argv;
 
-var number = 1;
-var type = "img";
 
-var IMG_URL = "http://localhost:5000/cams/cam0_0";
+var type = argv.t;
 
-if(process.argv.length == 4) {
-    number = parseInt(process.argv[2]);
-    type = process.argv[3];
-
-    if(type != "img" && type != "h264") {
-        console.log("Unrecognized type.");
-        process.exit(1);
-    }
+if(type != "img" && type != "h264") {
+    console.log("Unrecognized type.");
+    process.exit(1);
 }
 
-console.log("Starting for " + number.toString() + " and type " + type);
+
+var url = undefined;
+if (type == "img") {
+    url = "http://" + argv.u + "/cams/cams_0_0";
+} else {
+    url = "http://" + argv.u + "/264";
+}
+
+console.log("Starting for " + argv.w.toString() + " and type " + argv.t);
 
 
-for(var i = 0; i < number; i++) {
+for(var i = 0; i < argv.w; i++) {
 
     if(type == "h264") {
         (function () {
-            var socket = io.connect('http://localhost:5000/h264');
+            var socket = io.connect(url);
 
             socket.on('connect', function () {
                 console.log("socket connected");
@@ -49,7 +55,7 @@ for(var i = 0; i < number; i++) {
             var cycle = function () {
                 var updateStartTime = Date.now();
                 (function () {
-                    request(IMG_URL, function (error, response, body) {
+                    request(url, function (error, response, body) {
                         if(error)
                             errors += 1;
                         else

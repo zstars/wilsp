@@ -26,6 +26,10 @@ rdb = None
 
 def run(clients, format, measurements, results):
 
+    # First, we should run a number of requesters. So that they do not affect the benchmark, they should be run
+    # on a different computer.
+
+
     print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
 
     # Runs the actual flask server to be benchmarked, with gunicorn.

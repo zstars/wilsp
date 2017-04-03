@@ -30,14 +30,6 @@ os.chdir(dname)
 
 print(os.getcwd())
 
-#
-# This script is a work in progress.
-#
-
-benchmark_runner_greenlet = None
-benchmark_measurements_greenlet = None
-benchmark_keep_active_greenlet = None
-
 lua_fps = None  # type: StrictRedis.Script
 rdb = None
 
@@ -71,9 +63,9 @@ def run(clients, format, measurements, file):
     if rem_procs > 0:
         N.append(rem_procs)
 
-    global benchmark_runner_greenlet, benchmark_measurements_greenlet, benchmark_keep_active_greenlet
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N, format)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g, N, measurements, format, file)
+    benchmark_keep_active_greenlet = None
 
     if format == "img":
             benchmark_keep_active_greenlet = gevent.spawn(keep_active_g, N, format)

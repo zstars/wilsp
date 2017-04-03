@@ -26,6 +26,8 @@ rdb = None
 
 def run(clients, format, measurements, results):
 
+    print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
+
     # Runs the actual flask server to be benchmarked, with gunicorn.
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g)
 

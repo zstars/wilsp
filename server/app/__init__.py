@@ -1,12 +1,12 @@
 from gevent import monkey
 monkey.patch_all()
 
-from flask.ext.socketio import SocketIO
+from flask_socketio import SocketIO
 from flask import Flask
-from flask.ext.bootstrap import Bootstrap
-from flask.ext.mail import Mail
-from flask.ext.moment import Moment
-from flask.ext.redis import FlaskRedis
+from flask_bootstrap import Bootstrap
+from flask_mail import Mail
+from flask_moment import Moment
+from flask_redis import FlaskRedis
 
 from config import config
 

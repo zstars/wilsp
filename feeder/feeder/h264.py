@@ -83,7 +83,7 @@ class H264Feeder(object):
                         yield buf[:pos]
                         buf = buf[pos + len(newline):]
                     chunk = f.read(50)  # 50 bytes buffer: Appropriate for the amount of data we tend to receive.
-                    if not chunk:
+                    if not chunk or len(chunk) <= 0:
                         yield buf
                         break
                     buf += chunk

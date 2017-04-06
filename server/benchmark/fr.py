@@ -40,4 +40,4 @@ def run_test_command(path, clients):
 # This is just for testing and development. This script is meant to be called
 # automatically from the benchmark.
 if __name__ == "__main__":
-    start_remote_fakerequester("lrg@newplunder", "/Users/lrg/.ssh/id_rsa", "/home/lrg/wilsa/wilsaproxy/fakerequester", 2)
+    start_remote_fakerequester("lrg@newplunder", "~/.ssh/id_rsa", "/home/lrg/wilsa/wilsaproxy/fakerequester", 2)

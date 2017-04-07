@@ -1,5 +1,7 @@
 import os
 
+from feeder.config import BenchmarkConfig
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -11,7 +13,7 @@ class Config:
 
     # Note that this takes a significant amount of resources, which can affect the benchmark if the
     # fakewebcamserver is running in the same computer. (It can reduce the FPS from 30 to 25 with only 8 cams).
-    EMBED_QR = True
+    EMBED_QR = False
 
     @staticmethod
     def init_app(app):
@@ -29,9 +31,13 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     pass
 
+class BenchmarkConfig(Config):
+    pass
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
+    'benchmark': BenchmarkConfig,
     'default': DevelopmentConfig
 }

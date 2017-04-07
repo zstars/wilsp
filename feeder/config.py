@@ -34,9 +34,19 @@ class TestingConfig(Config):
 class ProductionConfig(Config):
     IMAGE_EXPIRE_TIME = 90
 
+
+class BenchmarkConfig(Config):
+
+    REDIS_PREFIX = 'wilsa'
+    REDIS_HOST = 'newplunder'
+    REDIS_PORT = 6379
+    REDIS_DB = 0
+
+
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'default': DevelopmentConfig
+    'default': DevelopmentConfig,
+    'benchmark': BenchmarkConfig
 }

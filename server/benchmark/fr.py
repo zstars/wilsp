@@ -7,7 +7,7 @@ managed using paramiko or fabric or similar.
 The remote computer needs to have everything ready:
 The fakerequester in a path, and node ready to use.
 """
-
+import time
 from fabric.api import env, run, execute, cd
 from fabric.network import ssh
 
@@ -27,11 +27,19 @@ def start_remote_fakerequester(host, keyfile, path, clients):
     env.gateway = "lrg@plunder.weblab.deusto.es:5800"
     execute(run_remote_commands, path, clients, hosts=[host])
 
+def stop_remote_fakerequester(host, keyfile):
+    env.key_filename = keyfile
+    env.gateway = "lrg@plunder.weblab.deusto.es:5800"
+    execute(stop_remote_commands, hosts=[host])
+
 
 def run_remote_commands(path, clients):
     with cd(path):
-        run("source ~/.bashrc && source ~/.nvm/nvm.sh && env && node run.js -w {}".format(clients))
+        run("source ~/.bashrc && source ~/.nvm/nvm.sh && env && bash -c \"nohup node run.js -w {} &\"".format(clients))
         # run("bash")
+
+def stop_remote_commands():
+    run("killall node")
 
 def run_test_command(path, clients):
     result = run("pwd")
@@ -41,3 +49,5 @@ def run_test_command(path, clients):
 # automatically from the benchmark.
 if __name__ == "__main__":
     start_remote_fakerequester("lrg@newplunder", "/Users/lrg/.ssh/id_rsa", "/home/lrg/wilsa/wilsaproxy/fakerequester", 2)
+    time.sleep(30)
+    stop_remote_fakerequester("lrg@newplunder", "/Users/lrg/.ssh/id_rsa")

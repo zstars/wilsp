@@ -1,6 +1,5 @@
 import os
 
-from feeder.config import BenchmarkConfig
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 

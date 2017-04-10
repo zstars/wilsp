@@ -27,6 +27,7 @@ def start_remote_fakerequester(host, keyfile, path, clients):
     env.gateway = "lrg@plunder.weblab.deusto.es:5800"
     execute(run_remote_commands, path, clients, hosts=[host])
 
+
 def stop_remote_fakerequester(host, keyfile):
     env.key_filename = keyfile
     env.gateway = "lrg@plunder.weblab.deusto.es:5800"

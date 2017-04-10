@@ -13,6 +13,9 @@ class Config:
     def init_app(app):
         pass
 
+class BenchmarkConfig(Config):
+    DEBUG = False
+    REDIS_URL = os.environ.get("REDIS_URL", "redis://@newplunder:6379/0")
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -29,5 +32,6 @@ config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'default': DevelopmentConfig
+    'default': DevelopmentConfig,
+    'benchmark': BenchmarkConfig
 }

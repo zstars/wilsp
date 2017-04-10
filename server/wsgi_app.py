@@ -16,7 +16,7 @@ sys.stdout = open('stdout.txt', 'w', 100)
 sys.stderr = open('stderr.txt', 'w', 100)
 
 
-application = create_app('production')
+application = create_app(os.environ.get("FLASK_CONFIG", 'production'))
 
 import logging
 file_handler = logging.FileHandler(filename='errors.log')

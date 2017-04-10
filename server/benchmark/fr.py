@@ -24,13 +24,13 @@ def start_remote_fakerequester(host, keyfile, path, clients):
     :return:
     """
     env.key_filename = keyfile
-    env.gateway = "lrg@plunder.weblab.deusto.es:5800"
+    # env.gateway = "lrg@plunder.weblab.deusto.es:5800"
     execute(run_remote_commands, path, clients, hosts=[host])
 
 
 def stop_remote_fakerequester(host, keyfile):
     env.key_filename = keyfile
-    env.gateway = "lrg@plunder.weblab.deusto.es:5800"
+    # env.gateway = "lrg@plunder.weblab.deusto.es:5800"
     execute(stop_remote_commands, hosts=[host])
 
 

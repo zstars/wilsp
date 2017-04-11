@@ -48,7 +48,7 @@ code = open('lua/ffmpeg_fps.lua', 'r').read()
 lua_ffmpeg_fps = rdb.register_script(code)
 
 
-def run(clients, format, measurements, file):
+def run(clients, format, measurements, file, webcam):
 
     print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
 
@@ -63,7 +63,7 @@ def run(clients, format, measurements, file):
     if rem_procs > 0:
         N.append(rem_procs)
 
-    benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N, format)
+    benchmark_runner_greenlet = gevent.spawn(benchmark_run_g, N, format, webcam)
     benchmark_measurements_greenlet = gevent.spawn(measurements_g, N, measurements, format, file)
     benchmark_keep_active_greenlet = None
 
@@ -334,6 +334,6 @@ if __name__ == "__main__":
     results.write("clients,format,cpu,mem_used,bw,fps,lat\n")
 
     for br in benchmark_runs:
-        run(br[0], br[1], options.measurements, results)
+        run(br[0], br[1], options.measurements, results, options.webcam)
 
     results.close()

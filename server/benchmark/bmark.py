@@ -160,8 +160,6 @@ def measurements_g(clients, measurements, format, results):
 
         gevent.sleep(1)
 
-    results.close()
-
 
 if __name__ == "__main__":
 

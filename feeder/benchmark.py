@@ -169,6 +169,10 @@ def measurements_g(feeders, measurements, format, file):
 
     INIT_ITERATIONS = 4
 
+    # To calculate Bps
+    last_bw = psutil.net_io_counters().bytes_sent
+    last_bw_time = time.time()
+
     while measurements_done < measurements:
 
         try:
@@ -178,7 +182,13 @@ def measurements_g(feeders, measurements, format, file):
                     lat = calculate_latency(feeders)
 
             cpu = psutil.cpu_percent(interval=None, percpu=False)
+
+            # Calculate bytes per second.
             bw = psutil.net_io_counters().bytes_sent
+            bw_time = time.time()
+            bytes_per_sec = int((last_bw - bw) / (bw_time - time.time()))
+            last_bw, last_bw_time = bw, bw_time
+
             mem_used = mem.used / (1024.0 ** 2)
 
             if format == "img":
@@ -187,7 +197,7 @@ def measurements_g(feeders, measurements, format, file):
                 fps = lua_ffmpeg_fps()
             fps = float(fps)
 
-            report = "{},{},{},{},{},{},{}\n".format(total_feeders, format, cpu, mem_used, bw, fps, lat)
+            report = "{},{},{},{},{},{},{}\n".format(total_feeders, format, cpu, mem_used, bytes_per_sec, fps, lat)
 
             # Ignore the first 4 iterations. They have unusually short times.
             if iterations > INIT_ITERATIONS:

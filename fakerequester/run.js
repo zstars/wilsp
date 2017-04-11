@@ -51,6 +51,7 @@ for(var i = 0; i < argv.w; i++) {
             var count = 0;
             var errors = 0;
             var programStartTime = Date.now();
+            var lastPrint = Date.now();
 
             var cycle = function () {
                 var updateStartTime = Date.now();
@@ -60,12 +61,18 @@ for(var i = 0; i < argv.w; i++) {
                             errors += 1;
                         else
                             count++;
-                        var elapsed = Date.now() - updateStartTime;
+                        var now = Date.now();
+                        var elapsed = now - updateStartTime;
                         var time_left = period - elapsed;
 
                         setTimeout(cycle, time_left);
 
-                        console.log("Frames: " + count.toString() + " | FPS: " + (count / ((Date.now() - programStartTime) / 1000)).toString() + " | Errors: " + errors.toString());
+                        // Print at most every 4 seconds.
+                        var sincePrint = now - lastPrint;
+                        if(sincePrint > 4*1000) {
+                            console.log("Frames: " + count.toString() + " | FPS: " + (count / ((Date.now() - programStartTime) / 1000)).toString() + " | Errors: " + errors.toString());
+                            lastPrint = now;
+                        }
                     });
                 })();
             };

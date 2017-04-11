@@ -186,7 +186,7 @@ def measurements_g(feeders, measurements, format, file):
             # Calculate bytes per second.
             bw = psutil.net_io_counters().bytes_sent
             bw_time = time.time()
-            bytes_per_sec = int((last_bw - bw) / (bw_time - time.time()))
+            bytes_per_sec = int((last_bw - bw) / (bw_time - last_bw_time))
             last_bw, last_bw_time = bw, bw_time
 
             mem_used = mem.used / (1024.0 ** 2)

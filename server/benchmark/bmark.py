@@ -59,6 +59,7 @@ def run(clients, format, measurements, results, basecomp, key, req_url):
     # Run until the measurements greenlet returns, indicating that we have taken enough measurements.
     benchmark_measurements_greenlet.join()
     gevent.kill(benchmark_runner_greenlet, exception=GreenletExit)
+
     benchmark_runner_greenlet.join()
 
     # Stop the fake requesters.
@@ -67,6 +68,10 @@ def run(clients, format, measurements, results, basecomp, key, req_url):
     except:
         print("[ERROR]: Could not stop fakerequester. This is a fatal error. Aborting.")
         sys.exit(1)
+
+    time.sleep(2)
+
+    print("Run done.")
 
 
 def benchmark_run_g():
@@ -90,9 +95,9 @@ def benchmark_run_g():
             gevent.sleep(2)
 
     except GreenletExit:
-        gl.kill()
         for p in procs:
             os.killpg(os.getpgid(p.pid), gevent.signal.SIGTERM)
+        gl.kill()
 
 
 def measurements_g(clients, measurements, format, results):
@@ -146,6 +151,8 @@ def measurements_g(clients, measurements, format, results):
             iterations += 1
         except:
             print("Error taking measurement.")
+            print("Reason: ")
+            traceback.print_exc()
             times_failed += 1
             if times_failed > 10:
                 print("Abort.")

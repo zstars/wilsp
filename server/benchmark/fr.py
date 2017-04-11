@@ -44,7 +44,9 @@ def stop_remote_fakerequester(host, keyfile):
 
 def run_remote_commands(path, clients, cam_url):
     with cd(path):
-        run("source ~/.bashrc && source ~/.nvm/nvm.sh && env && bash -c \"nohup node run.js -w {} -u {} &\"".format(clients, cam_url))
+        run(
+            "pwd && source ~/.bashrc && source ~/.nvm/nvm.sh && (nohup node run.js -w {} -u {} > nohup.out 2>&1 &)".format(
+                clients, cam_url), pty=False)
         # run("bash")
 
 
@@ -65,6 +67,7 @@ def run_test_command(path, clients):
 # This is just for testing and development. This script is meant to be called
 # automatically from the benchmark.
 if __name__ == "__main__":
-    start_remote_fakerequester("lrg@newplunder", "/Users/lrg/.ssh/id_rsa", "/home/lrg/wilsa/wilsaproxy/fakerequester", 2)
+    start_remote_fakerequester("lrg@newplunder", "~/.ssh/id_rsa", "/home/lrg/wilsa/wilsaproxy/fakerequester", 2,
+                               "http://newscabb/cams/cam0_0")
     time.sleep(30)
-    stop_remote_fakerequester("lrg@newplunder", "/Users/lrg/.ssh/id_rsa")
+    stop_remote_fakerequester("lrg@newplunder", "~/.ssh/id_rsa")

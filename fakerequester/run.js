@@ -16,11 +16,12 @@ if(type != "img" && type != "h264") {
 
 
 var url = undefined;
-if (type == "img") {
-    url = "http://" + argv.u + "/cams/cams_0_0";
-} else {
-    url = "http://" + argv.u + "/264";
-}
+// if (type == "img") {
+//    url = "http://" + argv.u + "/cams/cams_0_0";
+// } else {
+//    url = "http://" + argv.u + "/264";
+// }
+url = argv.u;
 
 console.log("Starting for " + argv.w.toString() + " and type " + argv.t);
 

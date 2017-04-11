@@ -78,7 +78,7 @@ def benchmark_run_g():
     gl = None
     try:
         def spawn_subproc():
-            proc = subprocess.Popen("gunicorn -w 4 -k gevent -b localhost:5000 --pythonpath ../$(pwd) wsgi_app:application",
+            proc = subprocess.Popen("gunicorn -w 4 -k gevent -b 0.0.0.0:5000 --pythonpath ../$(pwd) wsgi_app:application",
                                     shell=True, preexec_fn=os.setsid)
             procs.append(proc)
 
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     parser.add_option("-l", "--label", dest="label", default="bm_", help="Label for the result files")
     parser.add_option("-b", "--basecomp", dest="basecomp", default="lrg@newplunder", help="ssh-style user@host where the fake requesters will be run")
     parser.add_option("-k", "--key", dest="key", default="~/.ssh/id_rsa.pub", help="path to the public key that will be used to connect to the remote base comp")
-    parser.add_option("-u", "--requrl", dest="requrl", default="http://localhost/cams/cam0_0", help="URL to request")
+    parser.add_option("-u", "--requrl", dest="requrl", default="http://localhost:5000/cams/cam0_0", help="URL to request")
 
     (options, args) = parser.parse_args()
 

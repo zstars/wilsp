@@ -15,24 +15,25 @@ from fabric.network import ssh
 ssh.util.log_to_file("paramiko.log", 10)
 
 
-def start_remote_fakerequester(host, keyfile, path, clients):
+def start_remote_fakerequester(host, keyfile, path, clients, cam_url):
     """
     Starts the fakerequester script remotely.
     :param host:
     :param keyfile:
     :param path:
     :param clients:
+    :param cam_url:
     :return:
     """
     env.key_filename = keyfile
     # env.gateway = "lrg@plunder.weblab.deusto.es:5800"
-    execute(run_remote_commands, path, clients, hosts=[host])
+    execute(run_remote_commands, path, clients, cam_url, hosts=[host])
 
 
-def check_remote_fakerequester(host, keyfile):
+def check_remote_fakerequester(host, keyfile, path, clients):
     env.key_filename = keyfile
     # env.gateway = "lrg@plunder.weblab.deusto.es:5800"
-    return execute(check_remote_commands, hosts=[host])
+    return execute(check_remote_commands, path, hosts=[host])
 
 
 def stop_remote_fakerequester(host, keyfile):
@@ -41,9 +42,9 @@ def stop_remote_fakerequester(host, keyfile):
     execute(stop_remote_commands, hosts=[host])
 
 
-def run_remote_commands(path, clients):
+def run_remote_commands(path, clients, cam_url):
     with cd(path):
-        run("source ~/.bashrc && source ~/.nvm/nvm.sh && env && bash -c \"nohup node run.js -w {} &\"".format(clients))
+        run("source ~/.bashrc && source ~/.nvm/nvm.sh && env && bash -c \"nohup node run.js -w {} -u {} &\"".format(clients, cam_url))
         # run("bash")
 
 

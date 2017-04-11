@@ -20,7 +20,7 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
-import benchmark.fr
+import benchmark.fr as fr
 
 print(os.getcwd())
 
@@ -29,14 +29,14 @@ benchmark_measurements_greenlet = None
 
 rdb = None
 
-def run(clients, format, measurements, results, basecomp, key):
+def run(clients, format, measurements, results, basecomp, key, req_url):
 
     print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
 
     # First, we should run a number of requesters. So that they do not affect the benchmark, they should be run
     # on a different computer.
     try:
-        fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", clients)
+        fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", clients, req_url)
     except:
         print("[ERROR]: Could not start fakerequester. This is a fatal error. Aborting.")
         traceback.print_exc()
@@ -166,6 +166,7 @@ if __name__ == "__main__":
     parser.add_option("-l", "--label", dest="label", default="bm_", help="Label for the result files")
     parser.add_option("-b", "--basecomp", dest="basecomp", default="lrg@newplunder", help="ssh-style user@host where the fake requesters will be run")
     parser.add_option("-k", "--key", dest="key", default="~/.ssh/id_rsa.pub", help="path to the public key that will be used to connect to the remote base comp")
+    parser.add_option("-u", "--requrl", dest="requrl", default="http://localhost/cams/cam0_0", help="URL to request")
 
     (options, args) = parser.parse_args()
 
@@ -200,6 +201,6 @@ if __name__ == "__main__":
     results.write("clients,format,cpu,mem_used,bw,fps,lat\n")
 
     for br in benchmark_runs:
-        run(br[0], br[1], options.measurements, results, options.basecomp, options.key)
+        run(br[0], br[1], options.measurements, results, options.basecomp, options.key, options.requrl)
 
     results.close()

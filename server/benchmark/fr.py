@@ -28,6 +28,12 @@ def start_remote_fakerequester(host, keyfile, path, clients):
     execute(run_remote_commands, path, clients, hosts=[host])
 
 
+def check_remote_fakerequester(host, keyfile):
+    env.key_filename = keyfile
+    # env.gateway = "lrg@plunder.weblab.deusto.es:5800"
+    return execute(check_remote_commands, hosts=[host])
+
+
 def stop_remote_fakerequester(host, keyfile):
     env.key_filename = keyfile
     # env.gateway = "lrg@plunder.weblab.deusto.es:5800"
@@ -39,12 +45,20 @@ def run_remote_commands(path, clients):
         run("source ~/.bashrc && source ~/.nvm/nvm.sh && env && bash -c \"nohup node run.js -w {} &\"".format(clients))
         # run("bash")
 
+
+def check_remote_commands(path):
+    with cd(path):
+        return True
+
+
 def stop_remote_commands():
     run("killall node")
+
 
 def run_test_command(path, clients):
     result = run("pwd")
     print("RESULT: {}".format(result))
+
 
 # This is just for testing and development. This script is meant to be called
 # automatically from the benchmark.

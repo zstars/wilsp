@@ -40,6 +40,13 @@ def run(clients, format, measurements, results, basecomp, key):
         print("[ERROR]: Could not start fakerequester. This is a fatal error. Aborting.")
         sys.exit(1)
 
+    # Verifies that the fakerequester is running
+    try:
+        fr.check_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", clients)
+    except:
+        print("[ERROR]: Does not seem the fakerequester is running properly. Aborting.")
+        sys.exit(1)
+
     # Runs the actual flask server to be benchmarked, with gunicorn.
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g)
 

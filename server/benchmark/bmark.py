@@ -12,6 +12,7 @@ import psutil
 import seqfile
 import itertools
 import sys
+import traceback
 
 INIT_ITERATIONS = 4
 
@@ -38,6 +39,7 @@ def run(clients, format, measurements, results, basecomp, key):
         fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", clients)
     except:
         print("[ERROR]: Could not start fakerequester. This is a fatal error. Aborting.")
+        traceback.print_exc()
         sys.exit(1)
 
     # Verifies that the fakerequester is running
@@ -45,6 +47,7 @@ def run(clients, format, measurements, results, basecomp, key):
         fr.check_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", clients)
     except:
         print("[ERROR]: Does not seem the fakerequester is running properly. Aborting.")
+        traceback.print_exc()
         sys.exit(1)
 
     # Runs the actual flask server to be benchmarked, with gunicorn.

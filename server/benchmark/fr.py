@@ -8,6 +8,7 @@ The remote computer needs to have everything ready:
 The fakerequester in a path, and node ready to use.
 """
 import time
+import traceback
 from fabric.api import env, run, execute, cd
 from fabric.network import ssh
 

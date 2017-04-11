@@ -21,12 +21,17 @@ import psutil
 import zbarlight
 from PIL import Image
 import seqfile
+import sys
 
 from feeder import config
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
+
+# Add to PYTHONPATH automatically
+sys.path.append(dname)
+
 
 print(os.getcwd())
 

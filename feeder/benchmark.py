@@ -87,7 +87,7 @@ def run(clients, format, measurements, file):
     print("Run done.")
 
 
-def benchmark_run_g(feeders, format):
+def benchmark_run_g(feeders, format, webcam_url):
     """
     Runs the feeder subprocesses for benchmarking.
     Feeders is an array with the form [4, 4, 4]. Each element is a subprocess, and indicates the number of cameras.
@@ -106,7 +106,7 @@ def benchmark_run_g(feeders, format):
             for i in range(n):
                 sb.write("    cam{}_{}:\n".format(p, i))
                 sb.write("        img_urls: http://localhost:8050/fakewebcam/image.jpg\n")
-                sb.write("        mjpeg_url: http://localhost:8050/fakewebcam/image.mjpeg\n")
+                sb.write("        mjpeg_url: {}\n".format(webcam_url))
                 sb.write("        rotate: 0\n")
                 sb.write("        mpeg: False\n")
                 if format == "img":
@@ -299,6 +299,7 @@ if __name__ == "__main__":
     parser.add_option("-n", "--measurements", type="int", dest="measurements", default=15, help="Number of measurements to take")
     parser.add_option("-a", "--all", dest="all", default=False, action="store_true", help="Execute the benchmark multiple times for a different number of clients up to the specified one")
     parser.add_option("-l", "--label", dest="label", default="bm_", help="Label for the result files")
+    parser.add_option("-w", "--webcam", dest="webcam", default="http://localhost:8050/fakewebcam/image.mjpeg", help="Webcam MJPEG URL for the benchmark")
 
     (options, args) = parser.parse_args()
 

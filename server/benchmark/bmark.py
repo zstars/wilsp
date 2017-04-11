@@ -6,16 +6,20 @@ monkey.patch_all()
 
 from optparse import OptionParser
 import os
+import time
 import subprocess
 import psutil
 import seqfile
 import itertools
+import sys
 
 INIT_ITERATIONS = 4
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
+
+import benchmark.fr
 
 print(os.getcwd())
 
@@ -24,13 +28,17 @@ benchmark_measurements_greenlet = None
 
 rdb = None
 
-def run(clients, format, measurements, results):
+def run(clients, format, measurements, results, basecomp, key):
+
+    print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
 
     # First, we should run a number of requesters. So that they do not affect the benchmark, they should be run
     # on a different computer.
-
-
-    print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
+    try:
+        fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", clients)
+    except:
+        print("[ERROR]: Could not start fakerequester. This is a fatal error. Aborting.")
+        sys.exit(1)
 
     # Runs the actual flask server to be benchmarked, with gunicorn.
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g)
@@ -42,6 +50,13 @@ def run(clients, format, measurements, results):
     benchmark_measurements_greenlet.join()
     gevent.kill(benchmark_runner_greenlet, exception=GreenletExit)
     benchmark_runner_greenlet.join()
+
+    # Stop the fake requesters.
+    try:
+        fr.stop_remote_fakerequester(basecomp, key)
+    except:
+        print("[ERROR]: Could not stop fakerequester. This is a fatal error. Aborting.")
+        sys.exit(1)
 
 
 def benchmark_run_g():
@@ -90,14 +105,24 @@ def measurements_g(clients, measurements, format, results):
     times_measured = 0
     times_failed = 0
 
+    # To calculate Bps
+    last_bw = psutil.net_io_counters().bytes_sent
+    last_bw_time = time.time()
+
     while times_measured < measurements:
 
         try:
             cpu = psutil.cpu_percent(interval=None, percpu=False)
+
+            # Calculate bytes per second.
             bw = psutil.net_io_counters().bytes_sent
+            bw_time = time.time()
+            bytes_per_sec = int((bw - last_bw) / (bw_time - last_bw_time))
+            last_bw, last_bw_time = bw, bw_time
+
             mem_used = mem.used / (1024.0 ** 2)
 
-            report = "{},{},{},{},{},{},{}\n".format(clients, format, cpu, mem_used, bw, None, None)
+            report = "{},{},{},{},{},{},{}\n".format(clients, format, cpu, mem_used, bytes_per_sec, None, None)
 
             # Ignore the first iterations. They have unusually short times.
             if iterations > INIT_ITERATIONS:
@@ -129,6 +154,8 @@ if __name__ == "__main__":
     parser.add_option("-n", "--measurements", type="int", dest="measurements", default=15, help="Number of measurements to take")
     parser.add_option("-a", "--all", dest="all", default=False, action="store_true", help="Execute the benchmark multiple times for a different number of clients up to the specified one")
     parser.add_option("-l", "--label", dest="label", default="bm_", help="Label for the result files")
+    parser.add_option("-b", "--basecomp", dest="basecomp", default="lrg@newplunder", help="ssh-style user@host where the fake requesters will be run")
+    parser.add_option("-k", "--key", dest="key", default="~/.ssh/id_rsa.pub", help="path to the public key that will be used to connect to the remote base comp")
 
     (options, args) = parser.parse_args()
 
@@ -163,6 +190,6 @@ if __name__ == "__main__":
     results.write("clients,format,cpu,mem_used,bw,fps,lat\n")
 
     for br in benchmark_runs:
-        run(br[0], br[1], options.measurements, results)
+        run(br[0], br[1], options.measurements, results, options.basecomp, options.key)
 
     results.close()

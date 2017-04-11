@@ -38,7 +38,7 @@ class ProductionConfig(Config):
 class BenchmarkConfig(Config):
 
     REDIS_PREFIX = 'wilsa'
-    REDIS_HOST = 'newplunder'
+    REDIS_HOST = os.environ.get('REDIS_HOST', 'newplunder')
     REDIS_PORT = 6379
     REDIS_DB = 0
 

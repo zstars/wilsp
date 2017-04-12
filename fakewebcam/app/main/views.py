@@ -54,31 +54,30 @@ def version():
 def image():
     # Decide which image to serve.
 
+    force_qr = request.values.get("qr", "0") == "1"
+
     current_time = int(time.time() * 1000)
     global cycle_start_time
     elapsed_time = current_time - cycle_start_time
+
     if elapsed_time > 10000:
         cycle_start_time = int(time.time() * 1000)
-        current_time = int(time.time() * 1000)
         elapsed_time = 0
 
     earliest_ts = bisect_right(timestamps, elapsed_time) - 1
     if earliest_ts < 0:
         earliest_ts = 0
 
-    if not current_app.config["EMBED_QR"]:
-        return send_file(io.BytesIO(images[earliest_ts][1]), mimetype="image/jpg")
-    else:
+    if force_qr or (current_app.config["EMBED_QR"] and int(current_time / (1000/current_app.config["EMBED_QR_FREQ"])) % current_app.config['EMBED_QR_FREQ'] == 0):
         qr = create_qr()
         img = Image.open(io.BytesIO(images[earliest_ts][1]))
-
         img.paste(qr)
-
         img_io = io.BytesIO()
         img.save(img_io, 'JPEG', quality=70)
         img_io.seek(0)
-
         return send_file(img_io, mimetype="image/jpg")
+    else:
+        return send_file(io.BytesIO(images[earliest_ts][1]), mimetype="image/jpg")
 
 
 @main.route('/image.mjpeg')
@@ -101,7 +100,8 @@ def create_qr():
     """
     qr = qrcode.QRCode(
         version=1,
-        box_size=10,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=5
     )
     data = str(int(time.time() * 1000))
     crc = hex(zlib.crc32(data.encode('utf-8')))
@@ -119,11 +119,14 @@ def generator_mjpeg(tfps):
 
     last_frame_start_time = 0
 
+    frame_num = 0
+
     while True:
 
         global mjpeg_count
         print("[DBG]: Serving MJPEG frame: %d" % mjpeg_count)
         mjpeg_count += 1
+        frame_num += 1
 
         # FPS rate limiting
         target_frame_time = 1.0 / target_fps
@@ -149,7 +152,6 @@ def generator_mjpeg(tfps):
         elapsed_time = current_time - cycle_start_time
         if elapsed_time > 10000:
             cycle_start_time = int(time.time() * 1000)
-            current_time = int(time.time() * 1000)
             elapsed_time = 0
 
         earliest_ts = bisect_right(timestamps, elapsed_time) - 1
@@ -159,16 +161,19 @@ def generator_mjpeg(tfps):
         frame = images[earliest_ts][1]
 
         if current_app.config["EMBED_QR"]:
-            qr = create_qr()
-            img = Image.open(io.BytesIO(frame))
 
-            img.paste(qr)
+            if frame_num % current_app.config["EMBED_QR_FREQ"] == 0:
 
-            img_io = io.BytesIO()
-            img.save(img_io, 'JPEG', quality=70)
-            img_io.seek(0)
+                qr = create_qr()
+                img = Image.open(io.BytesIO(frame))
 
-            frame = img_io.getvalue()
+                img.paste(qr)
+
+                img_io = io.BytesIO()
+                img.save(img_io, 'JPEG', quality=70)
+                img_io.seek(0)
+
+                frame = img_io.getvalue()
 
         yield ('--frame\r\n'
                'Content-Type: image/jpeg\r\nContent-Length: {}\r\nX-Timestamp: {}\r\n\r\n'.format(len(frame), time.time()).encode() + frame + b'\r\n')

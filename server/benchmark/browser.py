@@ -53,12 +53,7 @@ def calculate_elapsed(current_time, snapshot_path):
     return elapsed
 
 
-def background_g(times):
-
-    # Prepare for recording results
-    results_file = seqfile.findNextFile(".", "browser_benchmark_results_", ".txt", maxattempts=100)
-    results = open(results_file, "w")
-    results.write("lat\n")
+def background_g(times, results):
 
     # Results recorded
     num_results = 0
@@ -75,10 +70,14 @@ def background_g(times):
 
             elapsed = calculate_elapsed(int(current_time * 1000), 'snapshot.jpeg')
 
-            print("ELAPSED: {}".format(elapsed))
+            # Try to get FPS
+            fps = driver.execute_script("return stats_fps")
 
-            results.write("{}\n".format(elapsed))
+            out = "{},{}\n".format(fps, elapsed)
+            results.write(out)
             results.flush()
+
+            print("RESULTS: {}".format(out))
 
             num_results += 1
             num_failures = 0
@@ -92,11 +91,11 @@ def background_g(times):
     results.close()
 
 
-def run(url, times):
+def run(url, times, results):
 
     global driver
 
-    glet = gevent.spawn(background_g, times)
+    glet = gevent.spawn(background_g, times, results)
 
     driver = webdriver.Chrome()
     driver.get(url)
@@ -111,7 +110,11 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-u", "--url", default=DEFAULT_URL, dest="url")
     parser.add_option("-t", "--times", type="int", default=DEFAULT_TIMES, dest="times")
+    parser.add_option("-c", "--csvoutput", metavar="FILE", default="out.csv", dest="csvoutput", help="Path to the CSV output file")
 
     (options, args) = parser.parse_args()
 
-    run(options.url, options.times)
+    results = open(options.csvoutput, "w")
+    results.write("fps,lat\n")
+
+    run(options.url, options.times, results)

@@ -24,8 +24,9 @@ def exp_imgrefresh(cam):
     :param cam:
     :return:
     """
-    tfps = request.values.get('tfps', 5)
-    return render_template('exps/camera_image_refresh.html', cam=cam, tfps=tfps)
+    tfps = request.values.get('tfps', 30)
+    qr = request.values.get('qr', 0)
+    return render_template('exps/camera_image_refresh.html', cam=cam, tfps=tfps, qr=qr)
 
 
 @main.route('/exps/mjpegnative/<cam>')
@@ -61,7 +62,8 @@ def exp_mpegjs(cam):
 @main.route('/exps/h264js/<cam>')
 def exp_h264js(cam):
     path = current_app.config.get('SOCKETIO_PATH', '')
-    return render_template('exps/camera_h264_js.html', cam=cam, socketio_path=path)
+    qr = request.values.get('qr', 0)
+    return render_template('exps/camera_h264_js.html', cam=cam, socketio_path=path, qr=qr)
 
 
 count = 0

@@ -135,7 +135,7 @@ if __name__ == "__main__":
     results = open(options.csvoutput, "w+")
 
     if len(options.preppend) > 0:
-        results.write("clients,format,fps,lat")
+        results.write("clients,format,fps,lat\n")
     else:
         results.write("fps,lat\n")
 

@@ -18,6 +18,7 @@ from selenium import webdriver
 
 from pyvirtualdisplay import Display
 
+import traceback
 
 DEFAULT_URL = "http://localhost:5000/exps/imgrefresh/cam0_0"
 DEFAULT_TIMES = 15
@@ -64,7 +65,7 @@ def background_g(times, results):
 
     while num_results < times:
         try:
-            gevent.sleep(4)
+            gevent.sleep(0.4)
 
             current_time = time.time()
 
@@ -84,9 +85,10 @@ def background_g(times, results):
             num_results += 1
             num_failures = 0
         except:
+            traceback.print_exc()
             print("Error measuring elapsed time. Retrying.")
             num_failures += 1
-            if num_failures > 5:
+            if num_failures > 50:
                 print("Aborting.")
                 break
 

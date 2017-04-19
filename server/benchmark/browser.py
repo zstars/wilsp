@@ -38,7 +38,7 @@ def calculate_elapsed(current_time, snapshot_path):
     image.load()
     codes = zbarlight.scan_codes('qrcode', image)
 
-    if len(codes) != 1:
+    if codes is None or len(codes) != 1:
         print("No code in image")
         return None
 
@@ -106,6 +106,8 @@ def run(url, times, results):
 
     driver = webdriver.Firefox()
     driver.get(url)
+
+    print("Driver is: {}".format(driver))
 
     glet.join()
 

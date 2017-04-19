@@ -15,7 +15,7 @@ class Config:
     EMBED_QR = False
 
     # Every how often we will embed a QR. 1 for every time. 30 for once every 30 frames. And so on.
-    EMBED_QR_FREQ = 10
+    EMBED_QR_FREQ = 1
 
     @staticmethod
     def init_app(app):

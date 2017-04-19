@@ -56,7 +56,7 @@ def calculate_elapsed(current_time, snapshot_path):
     return elapsed
 
 
-def background_g(times, results):
+def background_g(times, results, preppend):
 
     # Results recorded
     num_results = 0
@@ -83,7 +83,8 @@ def background_g(times, results):
             # Try to get FPS
             fps = driver.execute_script("return stats_fps")
 
-            out = "{},{}\n".format(fps, elapsed)
+            out = "{}{},{}\n".format(preppend, fps, elapsed)
+
             results.write(out)
             results.flush()
 
@@ -102,7 +103,7 @@ def background_g(times, results):
     results.close()
 
 
-def run(url, times, results):
+def run(url, times, results, preppend):
 
     global driver
 
@@ -112,7 +113,7 @@ def run(url, times, results):
     driver = webdriver.Firefox()
     driver.get(url)
 
-    glet = gevent.spawn(background_g, times, results)
+    glet = gevent.spawn(background_g, times, results, preppend)
 
     print("Driver is: {}".format(driver))
 
@@ -127,10 +128,15 @@ if __name__ == "__main__":
     parser.add_option("-u", "--url", default=DEFAULT_URL, dest="url")
     parser.add_option("-t", "--times", type="int", default=DEFAULT_TIMES, dest="times")
     parser.add_option("-c", "--csvoutput", metavar="FILE", default="out.csv", dest="csvoutput", help="Path to the CSV output file")
+    parser.add_option("-p", "--preppend", default="", dest="preppend")
 
     (options, args) = parser.parse_args()
 
-    results = open(options.csvoutput, "w")
-    results.write("fps,lat\n")
+    results = open(options.csvoutput, "w+")
 
-    run(options.url, options.times, results)
+    if len(options.preppend) > 0:
+        results.write("clients,format,fps,lat")
+    else:
+        results.write("fps,lat\n")
+
+    run(options.url, options.times, results, options.preppend)

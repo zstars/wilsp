@@ -64,7 +64,7 @@ def background_g(times, results):
     num_failures = 0
 
     # Wait for a while to start
-    gevent.sleep(6)
+    gevent.sleep(10)
 
     while num_results < times:
         try:
@@ -102,13 +102,13 @@ def run(url, times, results):
 
     global driver
 
-    glet = gevent.spawn(background_g, times, results)
-
     display = Display(visible=0, size=(800, 600))
     display.start()
 
     driver = webdriver.Firefox()
     driver.get(url)
+
+    glet = gevent.spawn(background_g, times, results)
 
     print("Driver is: {}".format(driver))
 

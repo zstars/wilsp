@@ -45,7 +45,7 @@ def stop_remote_browser(host, keyfile):
 def run_remote_commands(path, clients, cam_url):
     with cd(path):
         run(
-            "pwd && nohup python browser.py -u http://www.google.com -t 30 -c testresults.log > nohup.out 2>&1 &)".format(
+            "pwd && (nohup python browser.py -u http://www.google.com -t 30 -c testresults.log > nohup.out 2>&1 &)".format(
                 clients, cam_url), pty=False)
         # run("bash")
 

@@ -63,9 +63,12 @@ def background_g(times, results):
 
     num_failures = 0
 
+    # Wait for a while to start
+    gevent.sleep(6)
+
     while num_results < times:
         try:
-            gevent.sleep(0.4)
+            gevent.sleep(1)
 
             current_time = time.time()
 
@@ -88,7 +91,7 @@ def background_g(times, results):
             traceback.print_exc()
             print("Error measuring elapsed time. Retrying.")
             num_failures += 1
-            if num_failures > 50:
+            if num_failures > 20:
                 print("Aborting.")
                 break
 

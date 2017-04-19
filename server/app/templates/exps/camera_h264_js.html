@@ -38,6 +38,8 @@
             var renderedFrames = cam.getSuccessfulFrames();
             var fps = cam.getAverageFPS();
 
+            window.stats_fps = fps;
+
             $("#fpsnum").text(fps);
             $('#ffnum').text(failedFrames);
             $('#snum').text(renderedFrames);

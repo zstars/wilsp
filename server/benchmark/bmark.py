@@ -29,6 +29,7 @@ benchmark_measurements_greenlet = None
 
 rdb = None
 
+
 def run(clients, format, measurements, results, basecomp, key, req_url):
 
     print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))

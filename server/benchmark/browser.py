@@ -16,6 +16,8 @@ import time
 from optparse import OptionParser
 from selenium import webdriver
 
+from pyvirtualdisplay import Display
+
 
 DEFAULT_URL = "http://localhost:5000/exps/imgrefresh/cam0_0"
 DEFAULT_TIMES = 15
@@ -97,7 +99,10 @@ def run(url, times, results):
 
     glet = gevent.spawn(background_g, times, results)
 
-    driver = webdriver.Chrome()
+    display = Display(visible=0, size=(800, 600))
+    display.start()
+
+    driver = webdriver.Firefox()
     driver.get(url)
 
     glet.join()

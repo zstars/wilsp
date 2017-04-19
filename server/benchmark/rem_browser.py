@@ -15,7 +15,7 @@ from fabric.network import ssh
 ssh.util.log_to_file("paramiko_rb.log", 10)
 
 
-def start_remote_browser(host, keyfile, path, clients, cam_url):
+def start_remote_browser(host, keyfile, path, clients, cam_url, format):
     """
     Starts the fakerequester script remotely.
     :param host:
@@ -27,7 +27,7 @@ def start_remote_browser(host, keyfile, path, clients, cam_url):
     """
     env.key_filename = keyfile
     # env.gateway = "lrg@plunder.weblab.deusto.es:5800"
-    execute(run_remote_commands, path, clients, cam_url, hosts=[host])
+    execute(run_remote_commands, path, clients, cam_url, format, hosts=[host])
 
 
 def check_remote_browser(host, keyfile, path, clients):
@@ -42,11 +42,11 @@ def stop_remote_browser(host, keyfile):
     execute(stop_remote_commands, hosts=[host])
 
 
-def run_remote_commands(path, clients, cam_url):
+def run_remote_commands(path, clients, cam_url, format):
     with cd(path):
         run(
-            "pwd && (nohup python browser.py -u http://www.google.com -t 30 -c testresults.log > nohup.out 2>&1 &)".format(
-                clients, cam_url), pty=False)
+            "pwd && (nohup python browser.py -u {} -t 30 -c testresults.log -p {},{}, > nohup.out 2>&1 &)".format(
+                cam_url, clients, format), pty=False)
         # run("bash")
 
 
@@ -68,6 +68,6 @@ def run_test_command(path, clients):
 # automatically from the benchmark.
 if __name__ == "__main__":
     start_remote_browser("lrg@plunder.weblab.deusto.es:5800", "~/.ssh/id_rsa", "/home/lrg/wilsa/wilsaproxy/server/benchmark", 2,
-                               "http://newscabb/cams/cam0_0")
+                               "http://newscabb/cams/cam0_0", "img")
     time.sleep(30)
     stop_remote_browser("lrg@plunder.weblab.deusto.es:5800", "~/.ssh/id_rsa")

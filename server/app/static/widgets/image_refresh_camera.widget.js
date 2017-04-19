@@ -45,6 +45,15 @@ var ImageRefreshCamera = (function () {
         this.mStoppedTime = Date.now();
     }; // !stop
     /**
+     * Resets the FPS counter.
+     */
+    ImageRefreshCamera.prototype.resetFPS = function () {
+        this.mTimeStarted = Date.now();
+        this.mFramesRendered = 0;
+        this.mFailedFrames = 0;
+        this.mLastFrameTimeStart = 0;
+    }; // !resetFPS
+    /**
      * Retrieves the FPS that has been achieved in the current start-refresh period.
      * If the refresher is not running, then the last period's average FPS is returned.
      * If no time has elapsed, 0 is returned.
@@ -128,5 +137,5 @@ var ImageRefreshCamera = (function () {
         }
     }; // !getTimestampedURL
     return ImageRefreshCamera;
-})(); // !Camera
+}()); // !Camera
 //# sourceMappingURL=image_refresh_camera.widget.js.map

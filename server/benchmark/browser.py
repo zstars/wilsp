@@ -131,13 +131,10 @@ def run(url, times, results, preppend, forever):
         driver.quit()
 
 
-def sig_handler(signo, frame):
+def sig_handler(*args):
     print("Going down")
     global should_exit
     should_exit = True
-    signal.signal(signal.SIGTERM, sig_handler)
-
-
 
 
 if __name__ == "__main__":

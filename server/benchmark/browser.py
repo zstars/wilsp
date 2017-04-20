@@ -73,7 +73,7 @@ def background_g(times, results, preppend):
 
     gevent.sleep(2)
 
-    while num_results < times:
+    while not should_exit and num_results < times:
         try:
             gevent.sleep(1)
 

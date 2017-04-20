@@ -119,7 +119,7 @@ def run(url, times, results, preppend):
 
     glet.join()
 
-    driver.close()
+    driver.quit()
 
 
 if __name__ == "__main__":

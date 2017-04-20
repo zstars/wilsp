@@ -21,6 +21,7 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 
 import benchmark.fr as fr
+import benchmark.rem_browser as rem_browser
 
 print(os.getcwd())
 

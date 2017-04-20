@@ -31,14 +31,19 @@ benchmark_measurements_greenlet = None
 rdb = None
 
 
-def run(clients, format, measurements, results, basecomp, key, req_url):
+def run(clients, format, measurements, results, basecomp, key, req_url, browserhost):
 
     print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
+
+    if browserhost is not None and len(browserhost) > 0:
+        fr_clients = clients - 1
+    else:
+        fr_clients = clients
 
     # First, we should run a number of requesters. So that they do not affect the benchmark, they should be run
     # on a different computer.
     try:
-        fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", clients, req_url)
+        fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", fr_clients, req_url)
     except:
         print("[ERROR]: Could not start fakerequester. This is a fatal error. Aborting.")
         traceback.print_exc()
@@ -46,11 +51,21 @@ def run(clients, format, measurements, results, basecomp, key, req_url):
 
     # Verifies that the fakerequester is running
     try:
-        fr.check_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", clients)
+        fr.check_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", fr_clients)
     except:
         print("[ERROR]: Does not seem the fakerequester is running properly. Aborting.")
         traceback.print_exc()
         sys.exit(1)
+
+    if browserhost is not None and len(browserhost) > 0:
+        # Now we run the remote browser requester.
+        try:
+            rem_browser.start_remote_browser(browserhost, key, "/home/lrg/wilsa/wilsaproxy/server/benchmark", clients, req_url, format)
+        except:
+            print("[ERROR]: Could not start remote browser requester. This is a fatal error. Aborting.")
+            traceback.print_exc()
+            sys.exit(1)
+
 
     # Runs the actual flask server to be benchmarked, with gunicorn.
     benchmark_runner_greenlet = gevent.spawn(benchmark_run_g)
@@ -70,6 +85,14 @@ def run(clients, format, measurements, results, basecomp, key, req_url):
     except:
         print("[ERROR]: Could not stop fakerequester. This is a fatal error. Aborting.")
         sys.exit(1)
+
+    if browserhost is not None and len(browserhost) > 0:
+        try:
+            rem_browser.stop_remote_browser(browserhost, key)
+        except:
+            print("[ERROR]: Could not stop remote browser requester. This is a fatal error. Aborting.")
+            traceback.print_exc()
+            sys.exit(1)
 
     time.sleep(2)
 
@@ -175,6 +198,9 @@ if __name__ == "__main__":
     parser.add_option("-k", "--key", dest="key", default="~/.ssh/id_rsa.pub", help="path to the public key that will be used to connect to the remote base comp")
     parser.add_option("-u", "--requrl", dest="requrl", default="http://localhost:5000/cams/cam0_0", help="URL to request")
 
+    # For the browser-based requester.
+    parser.add_option("-h", "--browserhost", dest="browserhost", default="", help="ssh-style user@host for the browser requester")
+    
     (options, args) = parser.parse_args()
 
     if options.format not in ("img", "h264", "all"):
@@ -208,6 +234,6 @@ if __name__ == "__main__":
     results.write("clients,format,cpu,mem_used,bw,fps,lat\n")
 
     for br in benchmark_runs:
-        run(br[0], br[1], options.measurements, results, options.basecomp, options.key, options.requrl)
+        run(br[0], br[1], options.measurements, results, options.basecomp, options.key, options.requrl, options.browserhost)
 
     results.close()

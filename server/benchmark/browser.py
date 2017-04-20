@@ -9,6 +9,7 @@ from seqfile import seqfile
 
 monkey.patch_all()
 
+from gevent import signal
 from PIL import Image
 import zbarlight
 
@@ -24,6 +25,8 @@ DEFAULT_URL = "http://localhost:5000/exps/imgrefresh/cam0_0"
 DEFAULT_TIMES = 15
 
 driver = None  # Selenium webdriver
+
+should_exit = False
 
 
 def calculate_elapsed(current_time, snapshot_path):
@@ -103,9 +106,10 @@ def background_g(times, results, preppend):
     results.close()
 
 
-def run(url, times, results, preppend):
+def run(url, times, results, preppend, forever):
 
     global driver
+    global should_exit
 
     display = Display(visible=0, size=(800, 600))
     display.start()
@@ -119,7 +123,21 @@ def run(url, times, results, preppend):
 
     glet.join()
 
-    driver.quit()
+    if not forever:
+        driver.quit()
+    else:
+        while not should_exit:
+            gevent.sleep(1)
+        driver.quit()
+
+
+def sig_handler(signo, frame):
+    print("Going down")
+    global should_exit
+    should_exit = True
+    signal.signal(signal.SIGTERM, sig_handler)
+
+
 
 
 if __name__ == "__main__":
@@ -127,6 +145,7 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-u", "--url", default=DEFAULT_URL, dest="url")
     parser.add_option("-t", "--times", type="int", default=DEFAULT_TIMES, dest="times")
+    parser.add_option("-f", "--forever", action="store_true", dest="forever")
     parser.add_option("-c", "--csvoutput", metavar="FILE", default="out.csv", dest="csvoutput", help="Path to the CSV output file")
     parser.add_option("-p", "--preppend", default="", dest="preppend")
 
@@ -139,4 +158,6 @@ if __name__ == "__main__":
     else:
         results.write("fps,lat\n")
 
-    run(options.url, options.times, results, options.preppend)
+    gevent.signal(signal.SIGTERM, sig_handler)
+
+    run(options.url, options.times, results, options.preppend, options.forever)

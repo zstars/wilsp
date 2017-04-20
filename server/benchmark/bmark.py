@@ -199,8 +199,8 @@ if __name__ == "__main__":
     parser.add_option("-u", "--requrl", dest="requrl", default="http://localhost:5000/cams/cam0_0", help="URL to request")
 
     # For the browser-based requester.
-    parser.add_option("-h", "--browserhost", dest="browserhost", default="", help="ssh-style user@host for the browser requester")
-    
+    parser.add_option("-r", "--browserhost", dest="browserhost", default="", help="ssh-style user@host for the browser requester")
+
     (options, args) = parser.parse_args()
 
     if options.format not in ("img", "h264", "all"):

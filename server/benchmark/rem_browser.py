@@ -68,6 +68,6 @@ def run_test_command(path, clients):
 # automatically from the benchmark.
 if __name__ == "__main__":
     start_remote_browser("lrg@plunder.weblab.deusto.es:5800", "~/.ssh/id_rsa", "/home/lrg/wilsa/wilsaproxy/server/benchmark", 2,
-                               "http://192.168.0.7/exps/imgrefresh/cam0_0", "img")
+                               "http://192.168.0.7:8500/exps/imgrefresh/cam0_0", "img")
     time.sleep(30)
     stop_remote_browser("lrg@plunder.weblab.deusto.es:5800", "~/.ssh/id_rsa")

@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
 
-    results = open(options.csvoutput, "w+")
+    results = open(options.csvoutput, "a")
 
     if len(options.preppend) > 0:
         results.write("clients,format,fps,lat\n")

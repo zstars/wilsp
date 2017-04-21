@@ -126,6 +126,16 @@ class H264JSCamera
     } // !stop
 
     /**
+     * Resets the FPS counter.
+     */
+    public resetFPS()
+    {
+        this.mTimeStarted = Date.now();
+        this.mFramesRendered = 0;
+        this.mFailedFrames = 0;
+    } // !resetFPS
+
+    /**
      * Retrieves the number of successful frames in the last active period.
      */
     public getSuccessfulFrames(): number

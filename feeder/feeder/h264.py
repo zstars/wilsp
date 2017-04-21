@@ -42,7 +42,7 @@ class H264Feeder(object):
             # Seems to have around 0.8 seconds delay.
             ffmpeg_command = [self._ffmpeg_bin, '-r', '30', '-f', 'mjpeg', '-i', self._mjpeg_source, '-flags', '+low_delay',
                               '-probesize', '32', '-c:v', 'libx264', '-tune', 'zerolatency', '-preset:v', 'ultrafast', '-r',
-                              '30', "-f", "h264", "-s", "640x480", "-b:v", "1500k",
+                              '30', "-f", "h264", "-s", "480x640", "-b:v", "1500k",
                               #"-keyint_min", "1",
                               "-g", "100",  # This parameter is important: Every 100 frames at most it will send an I frame that initializes the stream
                               # "-profile:v", "baseline",

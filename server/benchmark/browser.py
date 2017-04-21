@@ -71,7 +71,7 @@ def background_g(times, results, preppend):
 
     driver.execute_script("cam.resetFPS()")
 
-    gevent.sleep(2)
+    gevent.sleep(5)
 
     while not should_exit and num_results < times:
         try:
@@ -102,8 +102,6 @@ def background_g(times, results, preppend):
             if num_failures > 20:
                 print("Aborting.")
                 break
-
-    results.close()
 
 
 def run(url, times, results, preppend, forever):

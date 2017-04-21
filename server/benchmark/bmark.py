@@ -40,14 +40,15 @@ def run(clients, format, measurements, results, basecomp, key, req_url, browserh
     else:
         fr_clients = clients
 
-    # First, we should run a number of requesters. So that they do not affect the benchmark, they should be run
-    # on a different computer.
-    try:
-        fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", fr_clients, req_url)
-    except:
-        print("[ERROR]: Could not start fakerequester. This is a fatal error. Aborting.")
-        traceback.print_exc()
-        sys.exit(1)
+    if fr_clients > 0:
+        # First, we should run a number of requesters. So that they do not affect the benchmark, they should be run
+        # on a different computer.
+        try:
+            fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", fr_clients, req_url)
+        except:
+            print("[ERROR]: Could not start fakerequester. This is a fatal error. Aborting.")
+            traceback.print_exc()
+            sys.exit(1)
 
     # Verifies that the fakerequester is running
     try:
@@ -79,12 +80,13 @@ def run(clients, format, measurements, results, basecomp, key, req_url, browserh
 
     benchmark_runner_greenlet.join()
 
-    # Stop the fake requesters.
-    try:
-        fr.stop_remote_fakerequester(basecomp, key)
-    except:
-        print("[ERROR]: Could not stop fakerequester. This is a fatal error. Aborting.")
-        sys.exit(1)
+    if fr_clients > 0:
+        # Stop the fake requesters.
+        try:
+            fr.stop_remote_fakerequester(basecomp, key)
+        except:
+            print("[ERROR]: Could not stop fakerequester. This is a fatal error. Aborting.")
+            sys.exit(1)
 
     if browserhost is not None and len(browserhost) > 0:
         try:

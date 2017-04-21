@@ -217,7 +217,7 @@ if __name__ == "__main__":
     if options.format == "img":
         formats = ["img"]
     elif options.format == "h264":
-        formats = ["h265"]
+        formats = ["h264"]
     elif options.format == "all":
         formats = ["img", "h264"]
 

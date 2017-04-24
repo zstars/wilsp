@@ -4307,6 +4307,7 @@ var WSAvcPlayer = new Class({
         this.rcvtime;
         this.prevframe;
 
+        this.mDecodedFrames = 0;
     },
 
 
@@ -4324,6 +4325,8 @@ var WSAvcPlayer = new Class({
 
         //var date = new Date();
         //console.log("WSAvcPlayer: Decode time: " + (date.getTime() - this.rcvtime) + " ms");
+
+        this.mDecodedFrames += 1;
     },
 
     onPictureDecodedCanvas: function (buffer, width, height) {
@@ -4356,8 +4359,10 @@ var WSAvcPlayer = new Class({
 
         this.canvasCtx.putImageData(this.canvasBuffer, 0, 0);
 
-        var date = new Date();
+        // var date = new Date();
         //console.log("WSAvcPlayer: Decode time: " + (date.getTime() - this.rcvtime) + " ms");
+        
+        this.mDecodedFrames += 1;
     },
 
 

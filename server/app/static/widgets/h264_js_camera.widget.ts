@@ -63,8 +63,6 @@ class H264JSCamera
     public start()
     {
         this.mTimeStarted = Date.now();
-        this.mFailedFrames = 0;
-        this.mFramesRendered = 0;
         this.mRunning = true;
 
         let that = this;
@@ -131,8 +129,6 @@ class H264JSCamera
     public resetFPS()
     {
         this.mTimeStarted = Date.now();
-        this.mFramesRendered = 0;
-        this.mFailedFrames = 0;
     } // !resetFPS
 
     /**
@@ -140,8 +136,7 @@ class H264JSCamera
      */
     public getSuccessfulFrames(): number
     {
-        // TODO: Implement this.
-        return 0;
+        return this.mWSAvc.mDecodedFrames;
         // return this.mJSMPEG.framesRendered;
     }
 

@@ -84,6 +84,7 @@ var H264JSCamera = (function () {
      */
     H264JSCamera.prototype.resetFPS = function () {
         this.mTimeStarted = Date.now();
+        this.mWSAvc.mDecodedFrames = 0;
     }; // !resetFPS
     /**
      * Retrieves the number of successful frames in the last active period.

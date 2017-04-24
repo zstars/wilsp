@@ -129,6 +129,7 @@ class H264JSCamera
     public resetFPS()
     {
         this.mTimeStarted = Date.now();
+        this.mWSAvc.mDecodedFrames = 0;
     } // !resetFPS
 
     /**

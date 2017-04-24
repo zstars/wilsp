@@ -109,8 +109,8 @@ def run(url, times, results, preppend, forever):
     global driver
     global should_exit
 
-    display = Display(visible=0, size=(800, 600))
-    display.start()
+    #display = Display(visible=0, size=(800, 600))
+    #display.start()
 
     driver = webdriver.Firefox()
     driver.get(url)

@@ -45,7 +45,7 @@ def stop_remote_browser(host, keyfile):
 def run_remote_commands(path, clients, cam_url, format):
     with cd(path):
         run(
-            "pwd && source /home/lrg/.virtualenvs/wilsa/bin/activate && (nohup python browser.py -u {} -t 30 -f -c testresults.log -p {},{}, > nohup.out 2>&1 &)".format(
+            "pwd && source /home/lrg/.virtualenvs/wilsa/bin/activate && export DISPLAY=:0 && (nohup python browser.py -u {} -t 30 -f -c testresults.log -p {},{}, > nohup.out 2>&1 &)".format(
                 cam_url, clients, format), pty=False)
         # run("bash")
 

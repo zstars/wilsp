@@ -69,7 +69,7 @@ def background_g(times, results, preppend):
     # Wait for a while to start
     gevent.sleep(20)
 
-    driver.execute_script("cam.resetFPS()")
+    driver.execute_script("wrappedJSObject.cam.resetFPS()")
 
     gevent.sleep(5)
 
@@ -84,7 +84,7 @@ def background_g(times, results, preppend):
             elapsed = calculate_elapsed(int(current_time * 1000), 'snapshot.jpeg')
 
             # Try to get FPS
-            fps = driver.execute_script("return stats_fps")
+            fps = driver.execute_script("return wrappedJSObject.stats_fps")
 
             out = "{}{},{}\n".format(preppend, fps, elapsed)
 

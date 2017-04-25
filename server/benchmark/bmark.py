@@ -110,7 +110,7 @@ def benchmark_run_g():
     gl = None
     try:
         def spawn_subproc():
-            proc = subprocess.Popen("gunicorn -w 4 -k gevent -b 0.0.0.0:5000 --pythonpath ../$(pwd) wsgi_app:application",
+            proc = subprocess.Popen("gunicorn -w 1 -k gevent -b 0.0.0.0:5000 --pythonpath ../$(pwd) wsgi_app:application",
                                     shell=True, preexec_fn=os.setsid)
             procs.append(proc)
 

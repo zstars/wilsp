@@ -67,7 +67,7 @@ def background_g(times, results, preppend):
     num_failures = 0
 
     # Wait for a while to start
-    gevent.sleep(5)
+    gevent.sleep(20)
 
     driver.execute_script("cam.resetFPS()")
 

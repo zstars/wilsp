@@ -138,7 +138,7 @@ def measurements_g(clients, measurements, format, results):
     mem = psutil.virtual_memory()
 
     # Wait before starting.
-    gevent.sleep(6)
+    gevent.sleep(10)
 
     # Note: The first iteration results should be discarded. They are faster.
 

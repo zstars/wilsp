@@ -67,7 +67,7 @@ def run_test_command(path, clients):
 # This is just for testing and development. This script is meant to be called
 # automatically from the benchmark.
 if __name__ == "__main__":
-    start_remote_browser("lrg@plunder.weblab.deusto.es:5800", "~/.ssh/id_rsa", "/home/lrg/wilsa/wilsaproxy/server/benchmark", 2,
-                               "http://192.168.0.7:8500/exps/imgrefresh/cam0_0", "img")
+    start_remote_browser("lrg@192.168.0.2:5800", "~/.ssh/id_rsa", "/home/lrg/wilsa/wilsaproxy/server/benchmark", 2,
+                               "http://192.168.0.7:8500/exps/h264js/cam0_0", "h264")
     time.sleep(60)
-    stop_remote_browser("lrg@plunder.weblab.deusto.es:5800", "~/.ssh/id_rsa")
+    stop_remote_browser("lrg@192.168.0.2:5800", "~/.ssh/id_rsa")

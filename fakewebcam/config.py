@@ -12,7 +12,7 @@ class Config:
 
     # Note that this takes a significant amount of resources, which can affect the benchmark if the
     # fakewebcamserver is running in the same computer. (It can reduce the FPS from 30 to 25 with only 8 cams).
-    EMBED_QR = False
+    EMBED_QR = True
 
     # Every how often we will embed a QR. 1 for every time. 30 for once every 30 frames. And so on.
     EMBED_QR_FREQ = 1

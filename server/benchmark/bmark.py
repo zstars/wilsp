@@ -45,7 +45,8 @@ def run(clients, format, measurements, results, basecomp, key, req_url, browserh
         # on a different computer. Those are run against the fake requester URL.
         # This is directly the image, in the case of the image-ref format.
         try:
-            fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", fr_clients, req_url, format)
+            fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", fr_clients,
+                                          req_url, format)
         except:
             print("[ERROR]: Could not start fakerequester. This is a fatal error. Aborting.")
             traceback.print_exc()
@@ -58,6 +59,8 @@ def run(clients, format, measurements, results, basecomp, key, req_url, browserh
         print("[ERROR]: Does not seem the fakerequester is running properly. Aborting.")
         traceback.print_exc()
         sys.exit(1)
+
+    print("Fake requester is running")
 
     if browserhost is not None and len(browserhost) > 0:
         # Now we run the remote browser requester.

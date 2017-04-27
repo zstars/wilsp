@@ -43,10 +43,21 @@ def stop_remote_fakerequester(host, keyfile):
 
 
 def run_remote_commands(path, clients, cam_url, formatopt):
+
+    # Split in groups.
+    full_groups = int(clients / 10)
+    partial = clients % 10
+    nums = []
+    for i in range(full_groups):
+        nums.append(10)
+    nums.append(partial)
+
     with cd(path):
-        run(
-            "pwd && source ~/.bashrc && source ~/.nvm/nvm.sh && (nohup node run.js -w {} -u {} -t {} > nohup.out 2>&1 &)".format(
-                clients, cam_url, formatopt), pty=False)
+
+        for num in nums:
+            run(
+                "pwd && source ~/.bashrc && source ~/.nvm/nvm.sh && (nohup node run.js -w {} -u {} -t {} > nohup_{}.out 2>&1 &)".format(
+                    num, cam_url, formatopt, num), pty=False)
         # run("bash")
 
 

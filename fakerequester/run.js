@@ -23,7 +23,7 @@ var url = undefined;
 // }
 url = argv.u;
 
-console.log("Starting for " + argv.w.toString() + " and type " + argv.t);
+console.log("Starting for " + argv.w.toString() + " and type " + argv.t + " and url " + argv.u);
 
 
 for(var i = 0; i < argv.w; i++) {
@@ -71,7 +71,11 @@ for(var i = 0; i < argv.w; i++) {
                         // Print at most every 5 seconds.
                         var sincePrint = now - lastPrint;
                         if(sincePrint > 4*1000) {
-                            var logentry = "W: " + argv.w + " | L: " + count.body.length + " | Frames: " + count.toString() + " | FPS: " + (count / ((Date.now() - programStartTime) / 1000)).toString() + " | Errors: " + errors.toString();
+
+                            if(body == undefined) {
+                                body = {length: 0};
+                            }
+                            var logentry = "W: " + argv.w + " | L: " + body.length + " | Frames: " + count.toString() + " | FPS: " + (count / ((Date.now() - programStartTime) / 1000)).toString() + " | Errors: " + errors.toString();
                             console.log(logentry);
                             lastPrint = now;
                         }

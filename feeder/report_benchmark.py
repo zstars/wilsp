@@ -5,7 +5,7 @@ import numpy as np
 from collections import defaultdict
 
 
-def create_report(input_file, csvout_file):
+def create_report(input_file, csvout_file, formatopts):
     with open(input_file) as csvfile:
         reader = csv.DictReader(csvfile)
         rows = [r for r in reader]
@@ -18,7 +18,7 @@ def create_report(input_file, csvout_file):
     }
 
     csvout = open(csvout_file, "w")
-    csvout.write("clients,format,cpu_avg,cpu_std,mem_used_avg,mem_used_std,fps_avg,fps_std\n")
+    csvout.write("clients,format,cpu_avg,cpu_std,mem_used_avg,mem_used_std,bw_avg,bw_std,fps_avg,fps_std\n")
 
     for row in rows:
         clients_num = row['clients']
@@ -29,18 +29,19 @@ def create_report(input_file, csvout_file):
             by_clients_for_h264[clients_num].append(row)
 
     # Now calculate the averages
-    for clients_num, rows in sorted(by_clients_for_img.items(), key=lambda item: int(item[0])):
+    for clients_num, rows in sorted(by_clients[formatopts].items(), key=lambda item: int(item[0])):
         assert type(rows) == list
 
         results = {}
-        for var in ['cpu', 'mem_used', 'fps']:
+        for var in ['cpu', 'mem_used', 'fps', 'bw']:
             var_list = list(map(lambda r: float(r[var]), rows))
             avg = np.average(var_list)
             std = np.std(var_list, ddof=1)
             results[var] = {'avg': avg, 'std': std}
 
-        csvrep = "{},{},{},{},{},{},{},{}".format(clients_num, 'img', results['cpu']['avg'], results['cpu']['std'],
+        csvrep = "{},{},{},{},{},{},{},{},{},{}".format(clients_num, 'img', results['cpu']['avg'], results['cpu']['std'],
                                                results['mem_used']['avg'], results['mem_used']['std'],
+                                               results['bw']['avg'], results['bw']['std'],
                                                results['fps']['avg'], results['fps']['std'])
 
         print(csvrep)
@@ -55,7 +56,8 @@ if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-i", "--input", metavar="FILE", default="csvexample.txt", dest="input", help="Path to the benchmark input file")
     parser.add_option("-c", "--csvoutput", metavar="FILE", default="out.csv", dest="csvoutput", help="Path to the CSV output file")
+    parser.add_option("-f", "--format", default="img", dest="format", help="Format to generate for")
 
     (options, args) = parser.parse_args()
 
-    create_report(options.input, options.csvoutput)
+    create_report(options.input, options.csvoutput, options.format)

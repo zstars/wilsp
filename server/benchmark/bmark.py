@@ -31,7 +31,7 @@ benchmark_measurements_greenlet = None
 rdb = None
 
 
-def run(clients, format, measurements, results, basecomp, key, req_url, browserhost):
+def run(clients, format, measurements, results, basecomp, key, req_url, browserhost, browserurl):
 
     print("BENCHMARK STARTING. Clients: {} | Format: {} | Measurements: {}".format(clients, format, measurements))
 
@@ -42,9 +42,10 @@ def run(clients, format, measurements, results, basecomp, key, req_url, browserh
 
     if fr_clients > 0:
         # First, we should run a number of requesters. So that they do not affect the benchmark, they should be run
-        # on a different computer.
+        # on a different computer. Those are run against the fake requester URL.
+        # This is directly the image, in the case of the image-ref format.
         try:
-            fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", fr_clients, req_url)
+            fr.start_remote_fakerequester(basecomp, key, "/home/lrg/wilsa/wilsaproxy/fakerequester", fr_clients, req_url, format)
         except:
             print("[ERROR]: Could not start fakerequester. This is a fatal error. Aborting.")
             traceback.print_exc()
@@ -61,7 +62,7 @@ def run(clients, format, measurements, results, basecomp, key, req_url, browserh
     if browserhost is not None and len(browserhost) > 0:
         # Now we run the remote browser requester.
         try:
-            rem_browser.start_remote_browser(browserhost, key, "/home/lrg/wilsa/wilsaproxy/server/benchmark", clients, req_url, format)
+            rem_browser.start_remote_browser(browserhost, key, "/home/lrg/wilsa/wilsaproxy/server/benchmark", clients, browserurl, format)
         except:
             print("[ERROR]: Could not start remote browser requester. This is a fatal error. Aborting.")
             traceback.print_exc()
@@ -198,10 +199,12 @@ if __name__ == "__main__":
     parser.add_option("-l", "--label", dest="label", default="bm_", help="Label for the result files")
     parser.add_option("-b", "--basecomp", dest="basecomp", default="lrg@newplunder", help="ssh-style user@host where the fake requesters will be run")
     parser.add_option("-k", "--key", dest="key", default="~/.ssh/id_rsa.pub", help="path to the public key that will be used to connect to the remote base comp")
+
     parser.add_option("-u", "--requrl", dest="requrl", default="http://localhost:5000/cams/cam0_0", help="URL to request")
 
     # For the browser-based requester.
     parser.add_option("-r", "--browserhost", dest="browserhost", default="", help="ssh-style user@host for the browser requester")
+    parser.add_option("-w", "--browserurl", dest="browserurl", default="http://localhost:5000/exps/imgrefresh/cam0_0", help="URL for the browser requester")
 
     (options, args) = parser.parse_args()
 
@@ -236,6 +239,6 @@ if __name__ == "__main__":
     results.write("clients,format,cpu,mem_used,bw,fps,lat\n")
 
     for br in benchmark_runs:
-        run(br[0], br[1], options.measurements, results, options.basecomp, options.key, options.requrl, options.browserhost)
+        run(br[0], br[1], options.measurements, results, options.basecomp, options.key, options.requrl, options.browserhost, options.browserurl)
 
     results.close()

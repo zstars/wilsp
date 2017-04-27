@@ -73,6 +73,7 @@ def create_report(input_file, browser_input_file, csvout_file, format_option):
                 var_list = list(map(lambda r: float(r[var]), rows))
                 avg = np.average(var_list)
                 std = np.std(var_list, ddof=1)
+                print("STD OF {} IS: {}".format(var_list, std))
                 results[var] = {'avg': avg, 'std': std}
             except:
                 print("Could not process var: {}".format(var))

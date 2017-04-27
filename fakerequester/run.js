@@ -71,7 +71,8 @@ for(var i = 0; i < argv.w; i++) {
                         // Print at most every 5 seconds.
                         var sincePrint = now - lastPrint;
                         if(sincePrint > 4*1000) {
-                            console.log("Frames: " + count.toString() + " | FPS: " + (count / ((Date.now() - programStartTime) / 1000)).toString() + " | Errors: " + errors.toString());
+                            var logentry = "W: " + argv.w + " | Frames: " + count.toString() + " | FPS: " + (count / ((Date.now() - programStartTime) / 1000)).toString() + " | Errors: " + errors.toString();
+                            console.log(logentry);
                             lastPrint = now;
                         }
                     });

@@ -11,7 +11,7 @@ def create_report(input_file, browser_input_file, csvout_file, format_option):
 
     with open(input_file) as csvfile:
         reader = csv.DictReader(csvfile)
-        rows = [r for r in reader]
+        rows = [r for r in reader if not r['clients'].startswith('clients')] # Ignore the repeated headers.
 
     with open(browser_input_file) as browser_csvfile:
         reader = csv.DictReader(browser_csvfile)
@@ -64,7 +64,7 @@ def create_report(input_file, browser_input_file, csvout_file, format_option):
 
 
     # Now calculate the averages, for the standard rows. FPS and lat is not registered here, it is in the browser-results log.
-    for clients_num, rows in sorted(by_clients_for_img.items(), key=lambda item: int(item[0])):
+    for clients_num, rows in sorted(by_clients[format_option].items(), key=lambda item: int(item[0])):
         assert type(rows) == list
 
         results = results_by_clients[format_option][clients_num]
@@ -78,7 +78,7 @@ def create_report(input_file, browser_input_file, csvout_file, format_option):
                 print("Could not process var: {}".format(var))
 
     # Now calculate the averages, for the FPS and LAT, which are in the browser-results log.
-    for clients_num, browser_rows in sorted(browser_by_clients_for_img.items(), key=lambda item: int(item[0])):
+    for clients_num, browser_rows in sorted(browser_by_clients[format_option].items(), key=lambda item: int(item[0])):
         assert type(browser_rows) == list
 
         results = results_by_clients[format_option][clients_num]
@@ -90,7 +90,6 @@ def create_report(input_file, browser_input_file, csvout_file, format_option):
                 results[var] = {'avg': avg, 'std': std, 'n': len(var_list)}
             except:
                 print("Could not process var: {}".format(var))
-
 
     for clients_num in range(1, clients_number+1):
         results = results_by_clients[format_option]["{}".format(clients_num)]

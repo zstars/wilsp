@@ -54,10 +54,10 @@ def run_remote_commands(path, clients, cam_url, formatopt):
 
     with cd(path):
 
-        for num in nums:
+        for idx, num in enumerate(nums):
             run(
                 "pwd && source ~/.bashrc && source ~/.nvm/nvm.sh && (nohup node run.js -w {} -u {} -t {} > nohup_{}.out 2>&1 &)".format(
-                    num, cam_url, formatopt, num), pty=False)
+                    num, cam_url, formatopt, idx), pty=False)
         # run("bash")
 
 

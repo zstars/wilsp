@@ -53,7 +53,7 @@ def create_report(input_file, browser_input_file, csvout_file, format_option):
             browser_by_clients_for_h264[clients_num].append(brow)
 
 
-    clients_number = min(len(by_clients_for_img), len(by_clients_for_h264), len(browser_by_clients_for_h264), len(browser_by_clients_for_img))
+    clients_number = min(len(by_clients[format_option]), len(browser_by_clients[format_option]))
     print("Clients number: {}".format(clients_number))
 
     results_by_clients = {
@@ -73,7 +73,7 @@ def create_report(input_file, browser_input_file, csvout_file, format_option):
                 var_list = list(map(lambda r: float(r[var]), rows))
                 avg = np.average(var_list)
                 std = np.std(var_list, ddof=1)
-                print("STD OF {} IS: {}".format(var_list, std))
+                # print("STD OF {} IS: {}".format(var_list, std))
                 results[var] = {'avg': avg, 'std': std}
             except:
                 print("Could not process var: {}".format(var))

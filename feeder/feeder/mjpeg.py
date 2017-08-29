@@ -1,6 +1,6 @@
 import gevent
 from gevent import monkey
-monkey.patch_all()
+monkey.patch_all(socket=True)
 
 import datetime
 import time
@@ -17,11 +17,16 @@ class FrameGrabbingException(Exception):
         super(FrameGrabbingException, self).__init__(message)
         self.errors = errors
 
+    def __str__(self):
+        return "FrameGrabbingException"
+
+
 class FrameTimeoutException(Exception):
     """
     To indicate that too much time passed between frame loops.
     """
-    pass
+    def __str__(self):
+        return "FrameTimeoutException"
 
 
 class MJPEGCamFeeder(CamFeeder):
@@ -76,14 +81,7 @@ class MJPEGCamFeeder(CamFeeder):
         :return:
         """
 
-        frame_timeout = gevent.Timeout(MJPEGCamFeeder.FRAME_TIMEOUT, FrameTimeoutException)
-
         while self._active:
-
-            # To ensure that the loop does not get fully stuck, especially on the .raw.read() of the requests responses.
-            if frame_timeout.pending:
-                frame_timeout.cancel()
-            frame_timeout.start()
 
             try:
 
@@ -129,17 +127,10 @@ class MJPEGCamFeeder(CamFeeder):
                     gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                     continue
 
-            except FrameTimeoutException as ftex:
-                print("FrameTimeoutException. Attempting to recover.", flush=True)
-                self._request_response = None
-                gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
             except Exception as unkex:
                 print("Unknown exception.", flush=True)
                 self._request_response = None
                 gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
-
-            finally:
-                frame_timeout.cancel()
 
     def _parse_next_image(self) -> (bytes, int):
         """
@@ -154,52 +145,65 @@ class MJPEGCamFeeder(CamFeeder):
         """
         headers = self._parse_headers()
 
-        content_type = headers.get('content-type')
-        if content_type is None:
-            raise FrameGrabbingException('Unexpected response: Content type not present')
-        if content_type != 'image/jpeg':
-            raise FrameGrabbingException('Unexpected response: Content type is not a JPEG image')
-        content_length = headers.get('content-length')
-        if content_length is None:
-            # It seems that content-length is not strictly necessary for mjpeg to work, so maybe we should handle
-            # this case.
-            raise FrameGrabbingException('No content-length available')
-        content_length = int(content_length)
+        # Set a gevent timeout to better enforce a frame timeout.
+        frame_timeout = gevent.Timeout(MJPEGCamFeeder.FRAME_TIMEOUT, None)
+        frame_timeout.start()
 
-        self._request_response.iter_content()
-        image = self._request_response.raw.read(content_length)
-        if len(image) != content_length:
-            raise FrameGrabbingException(
-                    'Unexpected length of retrieved image. Expected {} got {}.'.format(content_length, len(image)))
+        try:
+            content_type = headers.get('content-type')
+            if content_type is None:
+                raise FrameGrabbingException('Unexpected response: Content type not present')
+            if content_type != 'image/jpeg':
+                raise FrameGrabbingException('Unexpected response: Content type is not a JPEG image')
+            content_length = headers.get('content-length')
+            if content_length is None:
+                # It seems that content-length is not strictly necessary for mjpeg to work, so maybe we should handle
+                # this case.
+                raise FrameGrabbingException('No content-length available')
+            content_length = int(content_length)
 
-        # Now skip until the boundary is reached.
-        while True:
-            rawline = self._request_response.raw.readline()
-            if len(rawline) == 0:
-                # EOF
-                raise FrameGrabbingException('No more data received')
-            line = rawline.strip()
-            line = line.decode('utf-8')
-            line = line.strip('-')
-            if len(line) > 0:
-                if line == self._request_response_boundary:
-                    break
-                else:
-                    raise FrameGrabbingException('Did not find expected boundary: ', line)
+            image = self._request_response.raw.read(content_length)
+            if len(image) != content_length:
+                raise FrameGrabbingException(
+                        'Unexpected length of retrieved image. Expected {} got {}.'.format(content_length, len(image)))
 
-        date = headers.get('date')  # For some models of webcam
-        timestamp = headers.get('x-timestamp')  # For other models of webcam
+            # Now skip until the boundary is reached.
+            while True:
+                rawline = self._request_response.raw.readline()
+                if len(rawline) == 0:
+                    # EOF
+                    raise FrameGrabbingException('No more data received')
+                line = rawline.strip()
+                line = line.decode('utf-8')
+                line = line.strip('-')
+                if len(line) > 0:
+                    if line == self._request_response_boundary:
+                        break
+                    else:
+                        raise FrameGrabbingException('Did not find expected boundary: ', line)
 
-        if date is None and timestamp is None:
-            raise FrameGrabbingException('No date or x-timestamp header received. Headers present are: {}'.format(repr(headers)))
+            date = headers.get('date')  # For some models of webcam
+            timestamp = headers.get('x-timestamp')  # For other models of webcam
 
-        # TODO: This will support a very limited number of formats.
-        if date is not None:  # DCS-932L webcams have a date header. With minor variations depending on the firmware version.
-            date = str.join(' ', date.split(' ')[:3])
-            date = parse(date, fuzzy=True)
-        else:  # DCS 2230L webcams have quite a few parameters. Among them, a x-timestamp header with a millisecond-level timestamp.
-            timestamp = float(timestamp) / 1000.0
-            date = datetime.datetime.utcfromtimestamp(timestamp)
+            if date is None and timestamp is None:
+                raise FrameGrabbingException('No date or x-timestamp header received. Headers present are: {}'.format(repr(headers)))
+
+            # TODO: This will support a very limited number of formats.
+            if date is not None:  # DCS-932L webcams have a date header. With minor variations depending on the firmware version.
+                date = str.join(' ', date.split(' ')[:3])
+                date = parse(date, fuzzy=True)
+            else:  # DCS 2230L webcams have quite a few parameters. Among them, a x-timestamp header with a millisecond-level timestamp.
+                timestamp = float(timestamp) / 1000.0
+                date = datetime.datetime.utcfromtimestamp(timestamp)
+
+        except gevent.Timeout as to:
+            raise FrameTimeoutException('Gevent Timeout while grabbing. Attempting recovery.')
+
+        except FrameGrabbingException as fge:
+            raise fge
+
+        finally:
+            frame_timeout.cancel()
 
         return image, date
 

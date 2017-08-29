@@ -4,15 +4,24 @@
 As of now the project has only been tested with Python 3.
 Probably, Python 2.7 will NOT work without changes.
 
-It is recommended to have different virtualenvs for Feeder and
-Server, because, for now, Feeder relies on gevent and Server
-relies on eventlet, and apparently, at least under some version
-combinations, don't seem to work together nice enough with socketio.
+The project has several components. The main ones are the Feeders and the Servers.
+It is recommended to use virtualenvs with them, although the same virtualenv can be used
+for both.
 
 ## Feeder
 
-The Feeder relies on gevent. (Enventually it should be ported
-to eventlet).
+### Requirements
+
+The requirements for the Feeder component are defined in the requirements.txt file, which can be installed through
+> pip install -r requirements.txt
+
+In order for all the dependencies to be successfully installed, however, before doing that you
+might need to install the development package for your python version, and the zbar library.
+To do so, under Ubuntu:
+
+> sudo apt-get install python3.5-dev
+> sudo apt-get install libzbar-dev
+
 
 ### Configuration scheme
 
@@ -45,6 +54,4 @@ cycle_frames: How many frames have been rendered in that particular cycle
 
 ## Server
 
-The Server relies on gunicorn and eventlet. The chances of it working
-properly will be higher if gevent is *not* installed in the virtualenv.
  

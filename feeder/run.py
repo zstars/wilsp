@@ -41,6 +41,8 @@ def watchdog(rdb):
 def run():
     global greenlets
 
+    print("Starting Feeder component", flush=True)
+
     # Register exit handler
     signal.signal(signal.SIGINT, signal_handler)
     # print('Press Ctrl+C to exit.')

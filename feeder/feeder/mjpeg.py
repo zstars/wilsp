@@ -17,6 +17,12 @@ class FrameGrabbingException(Exception):
         super(FrameGrabbingException, self).__init__(message)
         self.errors = errors
 
+class FrameTimeoutException(Exception):
+    """
+    To indicate that too much time passed between frame loops.
+    """
+    pass
+
 
 class MJPEGCamFeeder(CamFeeder):
     """
@@ -25,11 +31,13 @@ class MJPEGCamFeeder(CamFeeder):
     """
 
     # If set to True an attempt will be made to re-establish the connection to re-sync when there is a too-long difference
-    # between the capture time reported by the remote webcam and the receive-time. This can cause due to limited bandwidth.
+    # between the capture time reported by the remote webcam and the receive-time. This can be due to limited bandwidth.
     LIVE_DELAY_CONTROL = True
-    # Maximum number of seconds of delay before a connection re-establish takes place. Because the webcam.
+    # Maximum number of seconds of delay before a connection re-establish takes place.
     # With a 1-second granularity webcams, being lower than 2 could easily trigger unnecessary resyncs.
     LIVE_DELAY_MAX = 2
+
+    FRAME_TIMEOUT = 10  # Time for gevent to assume something got blocked.
 
     WAIT_ON_ERROR = 0.1  # Time to wait when an error occurs.
 
@@ -68,46 +76,61 @@ class MJPEGCamFeeder(CamFeeder):
         :return:
         """
 
+        frame_timeout = gevent.Timeout(MJPEGCamFeeder.FRAME_TIMEOUT, FrameTimeoutException)
+
         while self._active:
 
-            need_to_sync = False
+            # To ensure that the loop does not get fully stuck, especially on the .raw.read() of the requests responses.
+            if frame_timeout.pending:
+                frame_timeout.cancel()
+            frame_timeout.start()
 
-            # We cannot control the rate client-side (it is set by the remote webcam) so we have to read
-            # as fast as possible.
-            gevent.sleep(0)
+            try:
 
-            self._check_active()
+                need_to_sync = False
 
-            # Re-establish the connection because we are out of sync?
-            live_control_restablish = self.LIVE_DELAY_CONTROL and self._is_too_delayed()
+                # We cannot control the rate client-side (it is set by the remote webcam) so we have to read
+                # as fast as possible.
+                gevent.sleep(0)
 
-            if self._request_response is None or live_control_restablish:
+                self._check_active()
+
+                # Re-establish the connection because we are out of sync?
+                live_control_restablish = self.LIVE_DELAY_CONTROL and self._is_too_delayed()
+
+                if self._request_response is None or live_control_restablish:
+                    try:
+                        self._start_streaming_request()
+                    except Exception as ex:
+                        print("Failed to start_streaming request. Cause: {}".format(ex), flush=True)
+                        gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
+                        continue
+
+                    # Keep track that we have just established a new connection, so that we store the date in the next
+                    # frame.
+                    need_to_sync = True
+
+                    # If we just re-established due to a live-control trigger, we register it.
+                    if live_control_restablish:
+                        self._stats_live_control_restablish += 1
+
                 try:
-                    self._start_streaming_request()
+                    frame, date = self._parse_next_image()
+                    if need_to_sync:
+                        self._server_sync_time = date
+                        self._local_sync_time = time.time()
+                    self._server_frame_time = date
+                    self._local_frame_time = time.time()
+                    frame = self._rotated(frame, self._rotation)
+                    self._put_frame(frame)
                 except Exception as ex:
-                    print("Failed to start_streaming request. Cause: {}".format(ex))
+                    print("Restarting connection. Cause: {}".format(ex), flush=True)
+                    self._request_response = None
                     gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                     continue
 
-                # Keep track that we have just established a new connection, so that we store the date in the next
-                # frame.
-                need_to_sync = True
-
-                # If we just re-established due to a live-control trigger, we register it.
-                if live_control_restablish:
-                    self._stats_live_control_restablish += 1
-
-            try:
-                frame, date = self._parse_next_image()
-                if need_to_sync:
-                    self._server_sync_time = date
-                    self._local_sync_time = time.time()
-                self._server_frame_time = date
-                self._local_frame_time = time.time()
-                frame = self._rotated(frame, self._rotation)
-                self._put_frame(frame)
-            except Exception as ex:
-                print("Restarting connection. Cause: {}".format(ex))
+            except FrameTimeoutException as ftex:
+                print("FrameTimeoutException. Attempting to recover.", flush=True)
                 self._request_response = None
                 gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                 continue
@@ -115,6 +138,12 @@ class MJPEGCamFeeder(CamFeeder):
     def _parse_next_image(self) -> (bytes, int):
         """
         Retrieves the next image from the stream.
+
+        Remark: This function is more dangerous than it seems because it relies on .raw.read() calls.
+        The standard requests library timeout applies only to discrete requests. If a .raw.read() call
+        is going on and the webcam stops responding, the code seems to block for very long (or indefinitely).
+        The Feeder relies on a per-frame gevent timeout to try to avoid this.
+
         :return: Tuple containing the bytes for the file, and the time reported by the server.
         """
         headers = self._parse_headers()

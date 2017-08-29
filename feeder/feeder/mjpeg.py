@@ -101,6 +101,7 @@ class MJPEGCamFeeder(CamFeeder):
                         self._start_streaming_request()
                     except Exception as ex:
                         print("Failed to start_streaming request. Cause: {}".format(ex), flush=True)
+                        self._request_response = None
                         gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
                         continue
 

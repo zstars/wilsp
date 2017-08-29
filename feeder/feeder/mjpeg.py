@@ -133,7 +133,13 @@ class MJPEGCamFeeder(CamFeeder):
                 print("FrameTimeoutException. Attempting to recover.", flush=True)
                 self._request_response = None
                 gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
-                continue
+            except Exception as unkex:
+                print("Unknown exception.", flush=True)
+                self._request_response = None
+                gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
+
+            finally:
+                frame_timeout.cancel()
 
     def _parse_next_image(self) -> (bytes, int):
         """
@@ -160,6 +166,7 @@ class MJPEGCamFeeder(CamFeeder):
             raise FrameGrabbingException('No content-length available')
         content_length = int(content_length)
 
+        self._request_response.iter_content()
         image = self._request_response.raw.read(content_length)
         if len(image) != content_length:
             raise FrameGrabbingException(

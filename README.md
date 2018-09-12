@@ -50,8 +50,19 @@ cycle_frames: How many frames have been rendered in that particular cycle
 
 (FPS for the current cycle is thus cycle_frames / cycle_elapsed)
 
-
-
 ## Server
+
+TO-DO 
+
+# Research Papers
+
+More details on the platform and its architecture, along with various performance and analysis, can be found in the published research papers:
+
+- Rodriguez-Gil, L., Orduña, P., García-Zubia, J., & López-de-Ipiña, D. (2018). Interactive live-streaming technologies and approaches for web-based applications. Multimedia Tools and Applications, 77(6), 6471-6502.
+  
+- Rodriguez-Gil, L., García-Zubia, J., Orduña, P., & López-de-Ipiña, D. (2017). An open and scalable Web-based interactive live-streaming architecture: The WILSP platform. IEEE Access, 5, 9842-9856.
+
+
+
 
  

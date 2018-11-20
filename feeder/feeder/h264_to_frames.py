@@ -1,5 +1,6 @@
 """
 This feeder module will extract a stream in the h264 format using ffmpeg and feed it into individual redis-frames.
+
 TO-DO: Verify that we can recover from errors.
 """
 
@@ -45,8 +46,11 @@ class H264ToFramesFeeder(CamFeeder):
         # Eventlet cannot greenify subprocess, so we will call ffmpeg from a different thread.
         def run_ffmpeg():
 
-            # Note: For now this is just for testing.
-            ffmpeg_input_parameters = ['-r', '10', '-f', 'mjpeg', '-i', 'https://cams.weblab.deusto.es/cams/cams/arduino1c1/mjpeg']
+            # Note: Those are for testing.
+            # ffmpeg_input_parameters = ['-r', '10', '-f', 'mjpeg', '-i', 'https://cams.weblab.deusto.es/cams/cams/arduino1c1/mjpeg']
+
+            # Those are for real:
+            ffmpeg_input_parameters = ['-i', self._h264_source]
             ffmpeg_output_parameters = ['-f', 'mjpeg']
 
             ffmpeg_command = [self._ffmpeg_bin, *ffmpeg_input_parameters, *ffmpeg_output_parameters, "pipe:1"]

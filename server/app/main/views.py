@@ -188,6 +188,11 @@ def cam(cam_id):
     except ValueError:
         return make_response("Wrong value: Rotate must be a float", 400)
 
+    crop_top = request.values.get("crop_top")
+    crop_bottom = request.values.get("crop_bottom")
+    crop_right = request.values.get("crop_right")
+    crop_left = request.values.get("crop_left")
+
     cam_key = REDIS_PREFIX + ":cams:" + cam_id
 
     # We will retry under some circumstances.

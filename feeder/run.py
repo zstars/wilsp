@@ -34,7 +34,7 @@ def watchdog(rdb):
     :return:
     """
     while True:
-        rdb.setex(config.REDIS_PREFIX + ":feeder:alive", 5, True)
+        rdb.setex(config.REDIS_PREFIX + ":feeder:alive", 5, 1)
         gevent.sleep(2)
 
 

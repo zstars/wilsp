@@ -4,4 +4,7 @@ cams:
     mjpeg_url: http://cams.weblab.deusto.es/webcam/fishtank1/video.mjpeg
     rotate: 0
     mpeg: True
+  # archimedes2:
+  #   h264_source: https://cams.weblab.deusto.es/cams/cams/chinese1
+
 

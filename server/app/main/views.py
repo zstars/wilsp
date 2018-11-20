@@ -78,6 +78,11 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate, tfps):
         yield make_response("Wrong value: Rotate must be a float", 400)
         return  # Return in a generator must be empty.
 
+    crop_top = "crop_top" in request.values
+    crop_bottom = "crop_bottom" in request.values
+    crop_right = "crop_right" in request.values
+    crop_left = "crop_left" in request.values
+
     cam_key = redis_prefix + ":cams:" + cam_id
 
     target_fps = tfps
@@ -128,12 +133,34 @@ def generator_mjpeg(cam_id, not_available, redis_prefix, rotate, tfps):
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + not_available + b'\r\n')
         else:
-            # It will also be possible to rotate the image via the actual definition of the camera, which will be
-            # more efficient because it means that the rotated image will be cached in redis.
-            if rotate > 0:
+            if rotate > 0 or crop_top or crop_bottom or crop_right or crop_left:
                 sio_in = io.BytesIO(frame)
                 img = Image.open(sio_in)  # type: Image
-                img = img.rotate(rotate, expand=True)
+
+                # Support crop_top
+                if crop_top:
+                    w, h = img.size
+                    img = img.crop((0, 0, w, h/2))
+
+                # Support crop_bottom
+                elif crop_bottom:
+                    w, h = img.size
+                    img = img.crop((0, h/2, w, h))
+
+                # Support crop_right
+                if crop_right:
+                    w, h = img.size
+                    img = img.crop((w/2, 0, w, h))
+
+                # Support crop_left
+                elif crop_left:
+                    w, h = img.size
+                    img = img.crop((0, 0, w/2, h))
+
+                # Support rotation.
+                if rotate > 0:
+                    img = img.rotate(rotate, expand=True)
+
                 sio_out = io.BytesIO()
                 img.save(sio_out, 'jpeg')
                 frame = sio_out.getvalue()
@@ -249,7 +276,6 @@ def cam(cam_id):
                 # Support rotation.
                 if rotate > 0:
                     img = img.rotate(rotate, expand=True)
-
 
                 sio_out = io.BytesIO()
                 img.save(sio_out, 'jpeg')

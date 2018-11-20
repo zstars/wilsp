@@ -11,8 +11,10 @@ import re
 from gevent import subprocess
 import redis
 
+from feeder.base import CamFeeder
 
-class H264ToFramesFeeder(object):
+
+class H264ToFramesFeeder(CamFeeder):
     """
     The H264 feeder will control a ffmpeg instance, transcode it into individual frames, direct them through a stdout
     pipe, and push them into redis as individual frames.
@@ -20,6 +22,8 @@ class H264ToFramesFeeder(object):
     """
 
     def __init__(self, rdb: redis.StrictRedis, redis_prefix: str, cam_name: str, h264_source: str, ffmpeg_bin: str):
+        super(H264ToFramesFeeder, self).__init__(rdb, redis_prefix, cam_name, None, None, 0)
+
         self._g = []
         self._cam_name = cam_name
         self._h264_source = h264_source
@@ -28,14 +32,22 @@ class H264ToFramesFeeder(object):
 
         self._ffmpeg_bin = ffmpeg_bin
 
+    def _run_until_inactive(self):
+        """
+        TO-DO: This is unused. It's abstract in the base classs but doesn't really make full sense with this
+        kind of ffmpeg source.
+        :return:
+        """
+        raise NotImplementedError()
+
     def _run(self):
 
         # Eventlet cannot greenify subprocess, so we will call ffmpeg from a different thread.
         def run_ffmpeg():
 
             # Note: For now this is just for testing.
-            ffmpeg_input_parameters = ['-r', '1', '-f', 'mjpeg', '-i', 'https://cams.weblab.deusto.es/cams/cams/arduino1c1/mjpeg']
-            ffmpeg_output_parameters = ['-r', '10', '-f', 'mjpeg']
+            ffmpeg_input_parameters = ['-r', '10', '-f', 'mjpeg', '-i', 'https://cams.weblab.deusto.es/cams/cams/arduino1c1/mjpeg']
+            ffmpeg_output_parameters = ['-f', 'mjpeg']
 
             ffmpeg_command = [self._ffmpeg_bin, *ffmpeg_input_parameters, *ffmpeg_output_parameters, "pipe:1"]
 
@@ -127,9 +139,13 @@ class H264ToFramesFeeder(object):
                         if packet[it] == 0xFF and packet[it+1] == 0xD9:
                             # We have a JPG frame now.
                             frame = packet[:it+2]
-                            f = open("out.jpg", "wb")
-                            f.write(frame)
-                            f.close()
+
+                            self._put_frame(frame)
+
+                            # For debugging purposes.
+                            # f = open("out.jpg", "wb")
+                            # f.write(frame)
+                            # f.close()
 
                             # Clear the frame from the packet buffer so that we can go on with the next frame.
                             packet = packet[it+2:]

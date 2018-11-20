@@ -13,6 +13,8 @@ class CamFeeder(object):
     """
     CamFeeder abstract base class. Children CamFeeders should at least implement the _run_until_inactive method.
     The base class handles FPS control and activity/inactivity flow, as long as _check_active() is periodically called.
+
+    TO-DO: max_fps and url should probably be removed from the base class.
     """
 
     IMAGE_EXPIRE_TIME = config.IMAGE_EXPIRE_TIME

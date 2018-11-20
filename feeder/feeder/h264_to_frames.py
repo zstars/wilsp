@@ -1,5 +1,6 @@
 """
 This feeder module will extract a stream in the h264 format using ffmpeg and feed it into individual redis-frames.
+TO-DO: Verify that we can recover from errors.
 """
 
 
@@ -34,7 +35,7 @@ class H264ToFramesFeeder(object):
 
             # Note: For now this is just for testing.
             ffmpeg_input_parameters = ['-r', '1', '-f', 'mjpeg', '-i', 'https://cams.weblab.deusto.es/cams/cams/arduino1c1/mjpeg']
-            ffmpeg_output_parameters = ['-r', '1', '-f', 'mjpeg']
+            ffmpeg_output_parameters = ['-r', '10', '-f', 'mjpeg']
 
             ffmpeg_command = [self._ffmpeg_bin, *ffmpeg_input_parameters, *ffmpeg_output_parameters, "pipe:1"]
 
@@ -97,28 +98,47 @@ class H264ToFramesFeeder(object):
             stderr_handler = gevent.spawn(handle_stderr, p.stderr)
             self._g.append(stderr_handler)
 
+            packet = bytes()
+            starting = True
+            it = 0  # Indicates the bytes we have examined.
             while True:
                 try:
 
-                    # Read the a first packet.
-                    packet = p.stdout.read(2048)
+                    # Read quite a few bytes.
+                    packet += bytes(p.stdout.read(2048))
                     n = len(packet)
 
-                    print("Retrieved {} bytes".format(n))
+                    if starting:
+                        # If we are just starting a JPEG, we should find 0xFF 0xD8 0xFF in the beginning.
+                        if n < 3:
+                            continue
 
+                        # Check whether we are indeed starting a JPG.
+                        if packet[0] == 0xFF and packet[1] == 0xD8 and packet[2] == 0xFF:
+                            # yes
+                            starting = False
+                        else:
+                            # Unexpected. Does not seem to be a JPG.
+                            return 2
 
-                    # Previously, this was just a channel, so we didn't need to split the frames. Now we do, however.
-                    # packet = p.stdout.read(2048)
-                    # n = len(packet)
-                    #
-                    # if n > 0:
-                    #     # It is noteworthy that, as of now, the packets are a stream. An alternative would be to split the frames
-                    #     # here. This is more efficient from a networking perspective, but it probably transfers some work
-                    #     # to the Redis listeners.
-                    #     self._rdb.publish(redis_channel, packet)
-                    #
-                    # elif n != 2048:
-                    #     return 2
+                    # Parse the incoming bytes to keep seeking for FF D9 (end of JPEG).
+                    while it < n - 1:  # n - 1 so that we ensure the header will be visible at once.
+                        # Full JPG found.
+                        if packet[it] == 0xFF and packet[it+1] == 0xD9:
+                            # We have a JPG frame now.
+                            frame = packet[:it+2]
+                            f = open("out.jpg", "wb")
+                            f.write(frame)
+                            f.close()
+
+                            # Clear the frame from the packet buffer so that we can go on with the next frame.
+                            packet = packet[it+2:]
+                            it = 0
+                            starting = True
+                            break
+                        else:
+                            it += 1
+
                 except ValueError as ex:
                     return 1
 

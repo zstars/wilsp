@@ -65,5 +65,6 @@ More details on the platform and its architecture, along with various performanc
 
 
 
+### Known-issues and TO-DOs
 
- 
+- h264_source scheme might not be guaranteed to recover from ffmpeg or network failures. 

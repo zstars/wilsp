@@ -21,3 +21,15 @@ may be available.
 * *mjpeg_url* An URL to a MJPEG stream emitted by the camera.
 * *mpeg* If set to True a MPEG stream will be generated and offered. Eventally there could be different sources for the stream,
 but, for now, if set to True, it will use the same URLs that are specified in img_url or mjpeg_url.
+
+
+
+
+## Image transformations
+
+The main camera endpoints support certain transformations that can be passed as GET parameters, such as:
+  - rotate=<value>
+  - crop_left
+  - crop_right
+  - crop_bottom
+  - crop_top

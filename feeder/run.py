@@ -11,6 +11,7 @@ from feeder.h264 import H264Feeder
 from feeder.image_refresher import ImageRefreshCamFeeder
 from feeder.mjpeg import MJPEGCamFeeder
 from feeder.mpeg import MPEGFeeder
+from feeder.h264_to_frames import H264ToFramesFeeder
 
 from feeder import config
 
@@ -73,14 +74,17 @@ def run():
         mjpeg_url = cam.get('mjpeg_url')
         mpeg = cam.get('mpeg')
         h264 = cam.get('h264')
+        h264_source = cam.get('h264_source')
 
         if mjpeg_url is not None:
             cf = MJPEGCamFeeder(rdb, config.REDIS_PREFIX, cam_name, mjpeg_url, 30, rotation)
         elif url is not None:
             cf = ImageRefreshCamFeeder(rdb, config.REDIS_PREFIX, cam_name, url, 30, rotation)
+        elif h264_source is not None:
+            cf = H264ToFramesFeeder(rdb, config.REDIS_PREFIX, cam_name, h264_source, config.FFMPEG_BIN)
 
-        if mjpeg_url is None and url is None:
-            raise Exception("img_url or mjpeg_url not specified for camera {}".format(cam_name))
+        if mjpeg_url is None and url is None and h264_source is None:
+            raise Exception("img_url or mjpeg_url or h264_source is not specified for camera {}".format(cam_name))
 
         if mpeg is not None and mpeg is True:
             mpeg_cf = MPEGFeeder(rdb, cam_name, mjpeg_url, config.FFMPEG_BIN)

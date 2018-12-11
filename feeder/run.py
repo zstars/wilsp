@@ -133,7 +133,7 @@ def run():
             greenthreads = []
 
             print("Retrying in 5 seconds...")
-            time.sleep(5)
+            gevent.sleep(5)
             print("Retrying now.", flush=False)
 
 

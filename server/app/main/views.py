@@ -1,3 +1,5 @@
+import sys
+
 import gevent
 from gevent import monkey
 monkey.patch_all()
@@ -233,16 +235,17 @@ def cam(cam_id):
         rdb.setex(cam_key + ":active", 30, 1)
 
         if frame is None:
-            # We check whether the feeder itself is alive to be able to give a proper error,
-            # even if, for now, we don't.
+            # We check whether the feeder itself is alive to be able to give a proper error.
             alive = rdb.get(REDIS_PREFIX + ":feeder:alive")
             if alive is None:
-                return current_app.send_static_file('no_image_available.png'), 400
+                print("Feeder component does not seem to be alive.", file=sys.stderr)
+                return current_app.send_static_file('no_image_available.png'), 503
 
             # Check whether the webcam is explicitly reporting an error. If it does, we just return not-available.
             err = rdb.get(cam_key + ":error")
             if err is not None:
-                return current_app.send_static_file('no_image_available.png'), 400
+                print("Webcam seems to be reporting an error", file=sys.stderr)
+                return current_app.send_static_file('no_image_available.png'), 503
 
             # If there is no error, we just retry: the webcam image should be available soon.
             if current_app.config.get('WAIT_FOR_WEBCAM', False):

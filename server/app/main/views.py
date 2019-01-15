@@ -8,7 +8,7 @@ import io
 import time
 
 from PIL import Image
-from flask import render_template, current_app, make_response, Response, request, stream_with_context
+from flask import render_template, current_app, make_response, Response, request, stream_with_context, jsonify
 
 from app import rdb
 from . import main
@@ -17,6 +17,10 @@ from . import main
 @main.route('/')
 def index():
     return render_template('base.html')
+
+@main.route('/healthcheck')
+def healthcheck():
+    return jsonify(result='success')
 
 
 @main.route('/exps/imgrefresh/<cam>')

@@ -1,3 +1,5 @@
+import traceback
+
 import gevent
 from gevent import monkey
 monkey.patch_all(socket=True)
@@ -126,6 +128,7 @@ class MJPEGCamFeeder(CamFeeder):
                     print("Restarting connection. Cause: {}".format(ex), flush=True)
                     self._request_response = None
                     gevent.sleep(MJPEGCamFeeder.WAIT_ON_ERROR)
+                    traceback.print_exc()
                     continue
 
             except Exception as unkex:

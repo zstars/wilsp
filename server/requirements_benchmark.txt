@@ -21,7 +21,7 @@ natsort==5.0.2
 nose==1.3.7
 olefile==0.44
 packaging==16.8
-Pillow==4.0.0
+Pillow==6.2.0
 psutil==5.2.0
 pyparsing==2.2.0
 python-dateutil==2.5.3
